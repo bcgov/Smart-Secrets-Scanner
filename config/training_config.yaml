@@ -1,0 +1,121 @@
+# Training Configuration for Smart Secrets Scanner
+# Llama 3 8B Fine-Tuning with LoRA/QLoRA
+
+# Model Configuration
+model:
+  base_model_path: "models/base/Meta-Llama-3.1-8B"
+  model_name: "meta-llama/Llama-3.1-8B"
+  cache_dir: "models/base"
+  
+# Data Configuration
+data:
+  train_file: "data/processed/smart-secrets-scanner-train.jsonl"
+  val_file: "data/processed/smart-secrets-scanner-val.jsonl"
+  max_seq_length: 2048
+  dataset_text_field: "text"  # Combined instruction/input/output
+
+# LoRA Configuration
+lora:
+  r: 16                        # LoRA rank (higher = more parameters, better quality)
+  lora_alpha: 32               # LoRA scaling factor (typically 2*r)
+  lora_dropout: 0.05           # Dropout for LoRA layers
+  bias: "none"                 # Bias training: "none", "all", or "lora_only"
+  task_type: "CAUSAL_LM"       # Task type for PEFT
+  target_modules:              # Which modules to apply LoRA to
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+
+# Quantization Configuration (4-bit for efficient training)
+quantization:
+  load_in_4bit: true
+  bnb_4bit_quant_type: "nf4"
+  bnb_4bit_compute_dtype: "float16"
+  bnb_4bit_use_double_quant: true
+
+# Training Arguments
+training:
+  output_dir: "outputs/checkpoints/smart-secrets-scanner"
+  num_train_epochs: 3
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 4  # Effective batch size = 4 * 4 = 16
+  
+  # Optimizer
+  optim: "paged_adamw_32bit"
+  learning_rate: 2.0e-4
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  
+  # Learning Rate Scheduler
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.03
+  
+  # Logging
+  logging_dir: "outputs/logs"
+  logging_steps: 10
+  logging_strategy: "steps"
+  
+  # Evaluation
+  evaluation_strategy: "steps"
+  eval_steps: 50
+  save_strategy: "steps"
+  save_steps: 50
+  save_total_limit: 3
+  
+  # Performance
+  fp16: false
+  bf16: true  # Use bf16 for better stability with Llama 3
+  gradient_checkpointing: true
+  
+  # Misc
+  seed: 42
+  report_to: "tensorboard"
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+  greater_is_better: false
+
+# SFT (Supervised Fine-Tuning) Configuration
+sft:
+  max_seq_length: 2048
+  packing: false  # Set true for better GPU utilization if sequences are short
+  dataset_text_field: "text"
+
+# Output Configuration
+output:
+  adapter_path: "models/fine-tuned/smart-secrets-scanner-lora"
+  merged_model_path: "outputs/merged/smart-secrets-scanner"
+  gguf_output_path: "models/gguf"
+
+# Alpaca Prompt Template
+prompt_template: |
+  Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+  
+  ### Instruction:
+  {instruction}
+  
+  ### Input:
+  {input}
+  
+  ### Response:
+  {output}
+
+# System Prompt for Inference (used in Modelfile)
+system_prompt: |
+  You are a specialized code security analyzer trained to detect hardcoded secrets and credentials in source code.
+  
+  Your task is to scan code snippets and identify potential security risks such as:
+  - API keys (AWS, Stripe, OpenAI, etc.)
+  - Authentication tokens (GitHub, JWT, Bearer tokens)
+  - Database credentials
+  - Private keys and certificates
+  - Passwords and secrets
+  
+  For each finding, respond with "ALERT: [type of secret] detected" and explain the risk.
+  For safe code (environment variables, test data, placeholders), respond "No secrets detected" or "Safe pattern".
+  
+  Be precise and minimize false positives while catching real security issues.

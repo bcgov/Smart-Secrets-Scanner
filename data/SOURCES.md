@@ -1,0 +1,95 @@
+# Training Data Sources
+
+## Smart Secrets Scanner POC Dataset - COMPLETED
+
+### Dataset Statistics
+
+**Training Set** (`smart-secrets-scanner-train.jsonl`):
+- **Total examples**: 56
+- **True positives** (secrets detected): 28 examples (50%)
+- **True negatives** (safe code): 28 examples (50%)
+- **Format**: Alpaca instruction-input-output
+- **Created**: 2025-11-01
+
+**Validation Set** (`smart-secrets-scanner-val.jsonl`):
+- **Total examples**: 16
+- **True positives**: 8 examples (50%)
+- **True negatives**: 8 examples (50%)
+- **Format**: Alpaca instruction-input-output
+- **Created**: 2025-11-01
+
+**Total dataset size**: 72 examples (56 train + 16 validation)
+
+### Secret Types Covered
+
+**True Positives** (API Keys, Credentials, Tokens):
+1. **Cloud Providers**: AWS access keys, Azure Storage keys, GCP service account keys
+2. **Payment/SaaS APIs**: Stripe, SendGrid, Twilio, Mailgun, Algolia
+3. **Developer Tools**: GitHub PAT, GitLab tokens, Bitbucket app passwords, NPM tokens
+4. **Databases**: PostgreSQL, MongoDB, Redis connection strings with passwords
+5. **Authentication**: JWT secrets, OAuth tokens, bearer tokens
+6. **Monitoring/Logging**: Datadog, New Relic, PagerDuty, Sentry
+7. **Infrastructure**: HashiCorp Vault tokens, Slack webhooks, Firebase keys
+8. **Private Keys**: RSA, SSH, TLS certificates
+9. **Obfuscation Techniques**: Base64 encoding, URL encoding, split strings, hex encoding
+
+**True Negatives** (Safe Patterns):
+1. **Environment Variables**: Correct usage of os.getenv, process.env, ${VAR}
+2. **Configuration**: Non-sensitive settings (ports, hosts, timeouts, feature flags)
+3. **Placeholders**: Documentation examples, YOUR_API_KEY_HERE patterns
+4. **Test Data**: Faker library, mock data, clearly labeled test fixtures
+5. **Public Values**: Public keys, UUIDs, public API endpoints, version numbers
+6. **Runtime Generation**: Secure random key generation, getpass for user input
+7. **Secret Managers**: AWS Secrets Manager, Azure Key Vault usage patterns
+
+### Edge Cases Included
+
+- **Obfuscated secrets**: Base64, URL encoding, split strings, hex encoding
+- **Fallback values**: Environment variables with hardcoded defaults (security anti-pattern)
+- **Comments with secrets**: TODO notes, debug comments containing credentials
+- **Weak cryptography**: Predictable keys, hardcoded values in hash functions
+- **Conditional patterns**: Variables named "password" with both safe and unsafe values
+- **Multi-language**: Python, JavaScript, Java, Go, YAML configurations
+
+### Data Sources
+
+All examples are **synthetically generated** based on:
+- Industry-standard secret patterns from GitGuardian, GitHub Secret Scanning
+- Real-world leaked secret types (no actual credentials used)
+- OWASP secure coding guidelines
+- Wiz Blog research on SLM-based secret detection
+- Pre-commit scanning best practices documentation
+
+### Licensing and Ethics
+
+✅ **All data is synthetic** - No real credentials or leaked secrets used  
+✅ **Privacy-preserving** - No actual breach data or PII included  
+✅ **Open source friendly** - Safe for public repositories and training  
+✅ **Ethical AI** - Designed to improve security, not exploit vulnerabilities  
+
+### Quality Assurance
+
+- ✅ Manual review of all 72 examples
+- ✅ Balanced positive/negative distribution (50/50)
+- ✅ Diverse programming languages and frameworks
+- ✅ Realistic code patterns from production environments
+- ✅ Clear, actionable output messages
+- ✅ Research-backed secret types and detection strategies
+
+### Format Validation
+
+```json
+{
+  "instruction": "Analyze the following code snippet and identify any secrets or sensitive credentials that should not be committed to version control.",
+  "input": "<code snippet>",
+  "output": "ALERT: <type> detected. <location>. <remediation>." | "No secrets detected. <explanation>."
+}
+```
+
+### References
+
+- [Wiz Blog: Small Language Model for Secrets Detection](https://www.wiz.io/blog/small-language-model-for-secrets-detection-in-code)
+- [GitGuardian Docs](https://docs.gitguardian.com)
+- [GitHub Secret Scanning](https://docs.github.com/en/code-security/secret-scanning)
+- [OWASP DevSecOps Pre-commit Guidelines](https://owasp.org/www-project-devsecops/)
+- Task 20: Generate JSONL dataset for Smart Secrets Scanner POC

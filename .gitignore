@@ -1,0 +1,95 @@
+# Environment variables and secrets
+.env
+.env.local
+*.key
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints
+
+# Model files (too large for Git)
+models/base/**/*.bin
+models/base/**/*.safetensors
+models/base/**/*.pt
+models/base/**/*.pth
+models/fine-tuned/**/*.bin
+models/fine-tuned/**/*.safetensors
+models/gguf/**/*.gguf
+outputs/checkpoints/**/*.bin
+outputs/checkpoints/**/*.safetensors
+outputs/merged/**/*.bin
+outputs/merged/**/*.safetensors
+
+# Keep directory structure
+!models/base/.gitkeep
+!models/fine-tuned/.gitkeep
+!models/gguf/.gitkeep
+!outputs/checkpoints/.gitkeep
+!outputs/merged/.gitkeep
+
+# Data files (potentially sensitive or large)
+data/raw/**/*.csv
+data/raw/**/*.txt
+data/raw/**/*.json
+data/processed/**/*.jsonl
+data/evaluation/**/*.jsonl
+
+# Keep README files
+!data/**/README.md
+!models/**/README.md
+!outputs/**/README.md
+
+# Logs
+outputs/logs/**/*.log
+outputs/logs/**/*.txt
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Secrets
+.env
+.env.local
+*.pem
+*.key
+credentials.json

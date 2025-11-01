@@ -1,0 +1,55 @@
+---
+license: cc-by-4.0
+tags:
+  - gguf
+  - ollama
+  - fine-tuned
+  - lora
+  - alignment
+  - constitutional-ai
+  - unsloth
+  - llama.cpp
+  - bf16
+language:
+  - en
+pipeline_tag: text-generation
+---
+
+# Generic Fine-Tuned LLM — GGUF Edition
+
+Version: 1.0 (Template)
+Date: 2025-10-31
+Lineage Steward: <your-name>
+Architect: <your-team-or-role>
+Base Model: <base-model-name>
+Forge Environment: WSL2 Ubuntu / CUDA / torch
+
+Overview:
+This is a generic template for documenting a fine-tuned LLM workflow. The process merges a LoRA adapter into the base model, then quantizes the result to GGUF for universal inference compatibility via Ollama and llama.cpp.
+
+Artifacts Produced:
+- LoRA Adapter: <model-name>-LoRA (Fine-tuned LoRA deltas)
+- GGUF Model: <model-name>-GGUF (Fully merged + quantized model)
+- Canonical Modelfile: Modelfile (Defines chat template + system prompt)
+
+Technical Provenance:
+Built using Unsloth, transformers, torch, and llama.cpp (GGUF converter) on a CUDA-enabled GPU.
+
+Pipeline:
+1. Fine-tune LoRA on your dataset
+2. Merge + Quantize → GGUF
+3. Push to Hugging Face (LoRA + GGUF)
+
+Deployment Guide:
+- Local Ollama Deployment: ollama create <model-name> -f ./Modelfile; ollama run <model-name>
+- Direct Pull: ollama run <your-hf-username>/<model-name>-GGUF
+
+Intended Use:
+- Research, experimentation, and deployment of fine-tuned LLMs
+- Recommended Interfaces: Ollama CLI, LM Studio, llama.cpp API, GPT4All
+- Context Length: <context-length>
+- Quantization: q4_k_m (recommended)
+
+License & Attribution:
+Released under Creative Commons Attribution 4.0 International (CC BY 4.0).
+Credit: Derived from <model-name> (© 2025 <your-name> / <your-project>)

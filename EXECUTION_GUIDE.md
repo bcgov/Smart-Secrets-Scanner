@@ -1,0 +1,667 @@
+# Execution Guide: Smart Secrets Scanner Fine-Tuning
+
+**Last Updated**: 2025-11-01  
+**Estimated Total Time**: 4-6 hours (depending on GPU)
+
+This guide provides step-by-step instructions to fine-tune Llama 3 for secret detection and deploy it to Ollama.
+
+---
+
+## Table of Contents
+
+1. [Prerequisites](#prerequisites)
+2. [Phase 1: Environment Setup](#phase-1-environment-setup)
+3. [Phase 2: Data Preparation](#phase-2-data-preparation)
+4. [Phase 3: Model Fine-Tuning](#phase-3-model-fine-tuning)
+5. [Phase 4: Model Export](#phase-4-model-export)
+6. [Phase 5: Testing & Evaluation](#phase-5-testing--evaluation)
+7. [Phase 6: Deployment](#phase-6-deployment)
+8. [Troubleshooting](#troubleshooting)
+
+---
+
+## Prerequisites
+
+### System Requirements
+- **OS**: WSL2 Ubuntu 20.04+ on Windows
+- **GPU**: NVIDIA GPU with 12GB+ VRAM (RTX 3060 or better)
+- **RAM**: 32GB+ recommended
+- **Disk Space**: 50GB free (models are large)
+- **CUDA**: 11.8+ with cuDNN
+
+### Software Requirements
+- **Git**: For cloning repositories
+- **Python**: 3.10+ (managed by ML-Env-CUDA13)
+- **WSL2**: Windows Subsystem for Linux 2
+- **NVIDIA Drivers**: Latest GPU drivers with WSL support
+
+### Repository Setup
+```bash
+# Clone repositories side-by-side
+cd ~/repos  # or your preferred location
+
+# 1. Clone ML-Env-CUDA13 (environment manager)
+git clone https://github.com/bcgov/ML-Env-CUDA13.git
+
+# 2. Clone this project
+git clone <your-repo-url> Llama3-FineTune-Coding
+
+# 3. Clone llama.cpp (for GGUF conversion)
+git clone https://github.com/ggerganov/llama.cpp.git
+
+# Verify structure
+ls -la
+# Should see: ML-Env-CUDA13/ Llama3-FineTune-Coding/ llama.cpp/
+```
+
+---
+
+## Phase 1: Environment Setup
+
+**Estimated Time**: 30-60 minutes
+
+### Step 1.1: Setup ML-Env-CUDA13
+
+```bash
+cd ~/repos/Llama3-FineTune-Coding
+
+# Run environment setup
+bash scripts/setup_env.sh
+```
+
+**What this does**:
+- Checks for ML-Env-CUDA13 sibling directory
+- Runs ML-Env-CUDA13 setup scripts
+- Creates Python virtual environment
+- Installs CUDA toolkit and dependencies
+
+**Expected Output**:
+```
+=== Setting up ML-Env-CUDA13 Environment ===
+Running ML-Env-CUDA13 WSL setup script...
+✓ CUDA installed
+✓ Python virtual environment created
+✓ Setup complete!
+```
+
+### Step 1.2: Install Python Dependencies
+
+```bash
+# Install fine-tuning libraries
+bash scripts/install_deps.sh
+```
+
+**What this does**:
+- Activates ML-Env-CUDA13 Python environment
+- Installs: transformers, datasets, accelerate, bitsandbytes, peft, trl, torch
+- Installs evaluation tools: sklearn, wandb (optional)
+
+**Verify Installation**:
+```bash
+# Activate environment
+source ../ML-Env-CUDA13/ml_env/bin/activate
+
+# Check CUDA availability
+python -c "import torch; print(f'CUDA Available: {torch.cuda.is_available()}')"
+# Expected: CUDA Available: True
+
+# Check installed packages
+pip list | grep -E "transformers|peft|trl|torch"
+```
+
+### Step 1.3: Download Base Model
+
+```bash
+# Download Llama 3 8B (15-30 GB)
+bash scripts/download_model.sh
+```
+
+**Alternative**: Manual download with Hugging Face CLI:
+```bash
+# Install huggingface_hub
+pip install huggingface-cli
+
+# Login to Hugging Face (requires account)
+huggingface-cli login
+
+# Download model
+huggingface-cli download meta-llama/Meta-Llama-3-8B --local-dir models/base/Meta-Llama-3-8B
+```
+
+**Expected Output**:
+```
+models/base/Meta-Llama-3-8B/
+├── config.json
+├── generation_config.json
+├── model-00001-of-00004.safetensors
+├── model-00002-of-00004.safetensors
+├── model-00003-of-00004.safetensors
+├── model-00004-of-00004.safetensors
+├── model.safetensors.index.json
+├── special_tokens_map.json
+├── tokenizer.json
+└── tokenizer_config.json
+```
+
+### Step 1.4: Build llama.cpp (for GGUF conversion)
+
+```bash
+cd ~/repos/llama.cpp
+
+# Build with CUDA support
+make LLAMA_CUBLAS=1
+
+# Verify build
+./main --version
+```
+
+---
+
+## Phase 2: Data Preparation
+
+**Estimated Time**: 15-30 minutes
+
+### Step 2.1: Verify Training Data
+
+```bash
+cd ~/repos/Llama3-FineTune-Coding
+
+# Check existing datasets
+ls -lh data/processed/
+# Should see:
+# - smart-secrets-scanner-train.jsonl (56 examples)
+# - smart-secrets-scanner-val.jsonl (16 examples)
+```
+
+### Step 2.2: Validate Data Quality
+
+```bash
+# Run data validation script
+python scripts/validate_dataset.py data/processed/smart-secrets-scanner-train.jsonl
+```
+
+**Expected Output**:
+```
+Validating data/processed/smart-secrets-scanner-train.jsonl...
+
+1. Checking JSONL syntax...
+  ✅ All lines are valid JSON
+
+2. Checking schema...
+  ✅ All required fields present
+
+3. Checking class balance...
+  Total: 56 examples
+  Secrets (ALERT): 28 (50.0%)
+  Safe: 28 (50.0%)
+  ✅ Dataset is balanced
+
+4. Checking token lengths...
+  Min: 120 tokens
+  Max: 450 tokens
+  Avg: 250.5 tokens
+  ✅ All examples fit in context window
+
+5. Checking for duplicates...
+  ✅ No duplicate inputs found
+
+=== Validation Complete ===
+✅ Dataset is ready for training!
+```
+
+### Step 2.3: Create Test Dataset (Optional but Recommended)
+
+**Task**: Generate 20 new examples for final evaluation
+
+```bash
+# Create test set following Task 31 guidelines
+# Examples should be DIFFERENT from train/val data
+# Include challenging edge cases
+```
+
+See `tasks/backlog/31-create-evaluation-test-dataset.md` for detailed instructions.
+
+### Step 2.4: Create Training Configuration
+
+Create `config/training_config.yaml`:
+
+```yaml
+model:
+  name: "models/base/Meta-Llama-3-8B"
+  max_seq_length: 2048
+  load_in_4bit: true
+
+lora:
+  r: 16
+  alpha: 32
+  target_modules: ["q_proj", "v_proj", "k_proj", "o_proj"]
+  dropout: 0.05
+  bias: "none"
+
+training:
+  output_dir: "./outputs/checkpoints"
+  num_train_epochs: 5
+  per_device_train_batch_size: 4
+  gradient_accumulation_steps: 4
+  learning_rate: 2e-4
+  warmup_steps: 10
+  logging_steps: 5
+  save_steps: 50
+  eval_steps: 25
+  save_total_limit: 3
+  fp16: true
+  optim: "paged_adamw_8bit"
+  report_to: "tensorboard"
+
+data:
+  train: "data/processed/smart-secrets-scanner-train.jsonl"
+  validation: "data/processed/smart-secrets-scanner-val.jsonl"
+  test: "data/evaluation/smart-secrets-scanner-test.jsonl"
+```
+
+---
+
+## Phase 3: Model Fine-Tuning
+
+**Estimated Time**: 1-3 hours (depends on GPU and epochs)
+
+### Step 3.1: Start Training
+
+```bash
+# Activate environment
+source ../ML-Env-CUDA13/ml_env/bin/activate
+
+# Start fine-tuning
+python scripts/fine_tune.py
+```
+
+**What happens**:
+1. Loads base Llama 3 8B model with 4-bit quantization
+2. Applies LoRA adapters (only ~0.5% of parameters trained)
+3. Trains for 5 epochs on 56 examples
+4. Saves checkpoints every 50 steps
+5. Validates every 25 steps
+6. Logs to TensorBoard
+
+**Expected Output** (per epoch):
+```
+Epoch 1/5
+Step 10/70: loss=1.234, learning_rate=0.0002
+Step 20/70: loss=0.876, learning_rate=0.0002
+...
+Evaluation: val_loss=0.654
+
+Epoch 5/5
+Step 350/350: loss=0.123
+Training complete!
+✅ LoRA adapter saved to: models/fine-tuned/smart-secrets-scanner-lora
+```
+
+### Step 3.2: Monitor Training (in another terminal)
+
+```bash
+# View TensorBoard
+tensorboard --logdir outputs/logs
+
+# Open browser to http://localhost:6006
+```
+
+**What to watch**:
+- **Training Loss**: Should decrease from ~2.0 to < 0.5
+- **Validation Loss**: Should track training loss (not increase)
+- **Learning Rate**: Should follow warmup schedule
+- **GPU Memory**: Monitor with `nvidia-smi`
+
+### Step 3.3: Review Training Logs
+
+```bash
+# Check final metrics
+cat outputs/logs/training_log.txt | tail -20
+
+# Check checkpoints
+ls -lh outputs/checkpoints/
+# checkpoint-50/
+# checkpoint-100/
+# checkpoint-best/  (lowest validation loss)
+```
+
+---
+
+## Phase 4: Model Export
+
+**Estimated Time**: 30-60 minutes
+
+### Step 4.1: Merge LoRA Adapter with Base Model
+
+```bash
+# Merge adapter into full model
+python scripts/merge_adapter.py \
+  --base-model models/base/Meta-Llama-3-8B \
+  --adapter models/fine-tuned/smart-secrets-scanner-lora \
+  --output outputs/merged/smart-secrets-scanner \
+  --verify
+```
+
+**Expected Output**:
+```
+🔗 Merging LoRA Adapter with Base Model
+🔽 Loading base model...
+🔽 Loading LoRA adapter...
+🔗 Merging weights...
+💾 Saving merged model...
+
+✅ Merge Complete!
+📁 Merged model: outputs/merged/smart-secrets-scanner/ (~15 GB)
+
+🧪 Verifying model...
+✅ Model generates output successfully
+```
+
+### Step 4.2: Convert to GGUF Format
+
+```bash
+# Convert to GGUF with quantization
+python scripts/convert_to_gguf.py \
+  --model outputs/merged/smart-secrets-scanner \
+  --output models/gguf/smart-secrets-scanner.gguf \
+  --quantize Q4_K_M Q8_0
+```
+
+**Expected Output**:
+```
+📦 Converting to GGUF Format
+🔄 Converting to F16 GGUF... ✅ (15 GB)
+🔧 Quantizing to Q4_K_M... ✅ (4.2 GB)
+🔧 Quantizing to Q8_0... ✅ (8.1 GB)
+
+✅ GGUF Conversion Complete!
+Created files:
+  📦 smart-secrets-scanner-f16.gguf (15.2 GB)
+  📦 smart-secrets-scanner-q4_k_m.gguf (4.2 GB)
+  📦 smart-secrets-scanner-q8_0.gguf (8.1 GB)
+```
+
+---
+
+## Phase 5: Testing & Evaluation
+
+**Estimated Time**: 30-60 minutes
+
+### Step 5.1: Test Inference with Merged Model
+
+```bash
+# Quick test with merged model
+python scripts/inference.py \
+  --model outputs/merged/smart-secrets-scanner \
+  --input 'api_key = "sk_live_1234567890abcdef"'
+```
+
+**Expected Output**:
+```
+🔍 Smart Secrets Scanner - Inference Results
+📄 Source: <direct input>
+🚨 ALERT: Stripe API key detected. This appears to be a live Stripe
+    secret key (sk_live_...) that should not be hardcoded.
+```
+
+### Step 5.2: Run Full Evaluation on Test Set
+
+```bash
+# Evaluate on test dataset
+python scripts/evaluate.py \
+  --model outputs/merged/smart-secrets-scanner \
+  --test-data data/evaluation/smart-secrets-scanner-test.jsonl
+```
+
+**Expected Output**:
+```
+=== Evaluation Results ===
+Accuracy:  0.950
+Precision: 0.923
+Recall:    0.962
+F1 Score:  0.942
+
+Classification Report:
+              precision    recall  f1-score
+Safe              0.95      0.93      0.94
+Secret            0.93      0.96      0.94
+```
+
+**Target Metrics**:
+- Precision: > 90% (few false positives)
+- Recall: > 95% (catch almost all secrets)
+- F1 Score: > 92%
+
+### Step 5.3: Test with Real Code Files
+
+```bash
+# Test on actual source files
+python scripts/inference.py \
+  --batch data/raw/python/ \
+  --model outputs/merged/smart-secrets-scanner
+```
+
+---
+
+## Phase 6: Deployment
+
+**Estimated Time**: 15-30 minutes
+
+### Step 6.1: Create Ollama Modelfile
+
+```bash
+# Generate Modelfile
+python scripts/create_modelfile.py \
+  --gguf models/gguf/smart-secrets-scanner-q4_k_m.gguf \
+  --output Modelfile
+```
+
+**Expected Output**:
+```
+📝 Creating Ollama Modelfile
+✅ Modelfile created: Modelfile
+   GGUF: models/gguf/smart-secrets-scanner-q4_k_m.gguf
+   Quantization: Q4_K_M
+```
+
+### Step 6.2: Import to Ollama
+
+```bash
+# Start Ollama (if not running)
+ollama serve &
+
+# Import model
+ollama create smart-secrets-scanner -f Modelfile
+```
+
+**Expected Output**:
+```
+transferring model data
+creating model layer
+using already created layer sha256:abc123...
+writing manifest
+success
+```
+
+### Step 6.3: Test Ollama Deployment
+
+```bash
+# Interactive test
+ollama run smart-secrets-scanner
+
+# Enter test at prompt:
+>>> Analyze: aws_access_key = "AKIAIOSFODNN7EXAMPLE"
+
+# Expected response:
+ALERT: AWS access key detected. This is a hardcoded AWS IAM access
+key (AKIA...) that should be stored in environment variables or AWS
+Secrets Manager.
+
+>>> /bye
+```
+
+### Step 6.4: Setup Pre-Commit Hooks
+
+```bash
+# Install pre-commit framework
+pip install pre-commit
+
+# Create .pre-commit-config.yaml
+cat > .pre-commit-config.yaml << 'EOF'
+repos:
+  - repo: local
+    hooks:
+      - id: smart-secrets-scanner
+        name: Smart Secrets Scanner (LLM)
+        entry: python scripts/scan_secrets.py
+        language: python
+        pass_filenames: true
+        types: [python, javascript, yaml]
+EOF
+
+# Install hook
+pre-commit install
+
+# Test on all files
+pre-commit run --all-files
+```
+
+### Step 6.5: Test Pre-Commit Hook
+
+```bash
+# Create test file with secret
+echo 'password = "admin123"' > test_secret.py
+git add test_secret.py
+
+# Try to commit (should be blocked)
+git commit -m "test commit"
+```
+
+**Expected Output**:
+```
+🔍 Smart Secrets Scanner - Pre-Commit Check
+📄 Scanning 1 file(s)...
+  Checking: test_secret.py... 🚨 ALERT
+
+❌ SECRETS DETECTED - COMMIT BLOCKED
+📁 test_secret.py
+   ALERT: Hardcoded password detected. The string "admin123"
+   appears to be a password that should not be committed.
+```
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+#### 1. CUDA Out of Memory
+**Error**: `RuntimeError: CUDA out of memory`
+
+**Solution**:
+```yaml
+# Edit config/training_config.yaml
+training:
+  per_device_train_batch_size: 2  # Reduce from 4
+  gradient_accumulation_steps: 8  # Increase to maintain effective batch size
+```
+
+Or use gradient checkpointing:
+```python
+# In scripts/fine_tune.py
+model.gradient_checkpointing_enable()
+```
+
+#### 2. No CUDA Devices Found
+**Error**: `CUDA Available: False`
+
+**Solution**:
+```bash
+# Check WSL GPU access
+nvidia-smi
+
+# Update WSL2 kernel
+wsl --update
+
+# Reinstall NVIDIA drivers for WSL
+# Download from: https://developer.nvidia.com/cuda/wsl
+```
+
+#### 3. Ollama Model Not Found
+**Error**: `Error: model 'smart-secrets-scanner' not found`
+
+**Solution**:
+```bash
+# Verify Ollama is running
+ollama list
+
+# Recreate model
+ollama create smart-secrets-scanner -f Modelfile
+
+# Check GGUF path in Modelfile is absolute
+cat Modelfile | grep FROM
+```
+
+#### 4. Training Loss is NaN
+**Error**: Loss becomes NaN during training
+
+**Solution**:
+```yaml
+# Reduce learning rate
+training:
+  learning_rate: 1e-4  # Reduce from 2e-4
+
+# Or add gradient clipping
+max_grad_norm: 1.0
+```
+
+#### 5. Import Errors
+**Error**: `ImportError: No module named 'peft'`
+
+**Solution**:
+```bash
+# Ensure correct environment is activated
+source ../ML-Env-CUDA13/ml_env/bin/activate
+
+# Reinstall dependencies
+bash scripts/install_deps.sh
+
+# Verify installation
+pip list | grep peft
+```
+
+---
+
+## Next Steps
+
+After successful deployment:
+
+1. **Monitor Performance**: Track false positives/negatives in production
+2. **Expand Dataset**: Add more examples for edge cases discovered
+3. **Fine-Tune Again**: Retrain with expanded dataset
+4. **Integrate with CI/CD**: Add to GitHub Actions, GitLab CI, etc.
+5. **Compare with Baselines**: Test against GitGuardian, TruffleHog
+6. **Optimize for Speed**: Use smaller quantization (Q4_K_S) if needed
+7. **Deploy to Team**: Share Modelfile with team members
+
+---
+
+## Reference
+
+- **Detailed Task List**: See `tasks/backlog/` for individual task specifications
+- **Script Documentation**: See `SCRIPTS_TASKS_MAPPING.md` for complete script reference
+- **Architecture Decisions**: See `adrs/` for design rationale
+- **Data Documentation**: See `data/README.md` for dataset structure
+
+---
+
+## Support
+
+For issues or questions:
+1. Check `TROUBLESHOOTING.md` (when created - Task 29)
+2. Review task files in `tasks/backlog/`
+3. Open an issue on GitHub
+
+---
+
+**🎉 Congratulations! You've successfully fine-tuned and deployed a custom LLM for secret detection!**
