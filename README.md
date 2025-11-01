@@ -1,6 +1,6 @@
-# Smart Secrets Scanner
+# Smart-Secrets-Scanner
 
-**Fine-tuned Llama 3 for detecting hardcoded secrets and credentials in source code**
+**Fine-tuned Llama 3.1 model designed to detect accidental hardcoded secrets and credentials in source code**
 
 > **Note:** Repository folder is currently named `Llama3-FineTune-Coding` but project name is **Smart Secrets Scanner**. Folder can be renamed later without affecting functionality.
 
@@ -49,6 +49,8 @@ sequenceDiagram
 ```
 
 ## Step-by-Step Process
+
+> **⚠️ Note on Datasets**: Training data files (`.jsonl`) are **intentionally excluded** from this repository via `.gitignore` to avoid triggering GitHub's secret scanning on example secrets. The dataset structure and templates are documented in `data/README.md`. You can generate your own training data using the provided validation script.
 
 ### **Phase 1: Data Preparation** 📊
 1. **Create JSONL training data** → `data/processed/smart-secrets-scanner-train.jsonl`
