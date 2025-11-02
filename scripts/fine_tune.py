@@ -12,6 +12,7 @@ import argparse
 import yaml
 import torch
 from pathlib import Path
+from datetime import datetime
 from datasets import load_dataset
 from transformers import (
     AutoModelForCausalLM,
@@ -132,9 +133,14 @@ def main():
                        help='Path to training configuration file')
     args = parser.parse_args()
     
+    # Record start time
+    start_time = datetime.now()
+    
     print("=" * 70)
     print("🚀 Smart Secrets Scanner - Fine-Tuning Script")
     print("=" * 70)
+    print(f"⏰ Start time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print()
     
     # Authenticate with Hugging Face
     print("\n🔐 Authenticating with Hugging Face...")
@@ -266,9 +272,18 @@ def main():
     trainer.model.save_pretrained(output_path)
     tokenizer.save_pretrained(output_path)
     
+    # Record end time and calculate duration
+    end_time = datetime.now()
+    duration = end_time - start_time
+    hours, remainder = divmod(duration.total_seconds(), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    
     print("\n" + "=" * 70)
     print("✅ Training Complete!")
     print("=" * 70)
+    print(f"\n⏰ Start time:  {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"⏰ End time:    {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"⏱️  Total time:  {int(hours)}h {int(minutes)}m {int(seconds)}s")
     print(f"\n📁 LoRA adapter saved to: {output_path}")
     print(f"📁 Training checkpoints: {config['training']['output_dir']}")
     print(f"📁 Training logs: {config['training']['logging_dir']}")

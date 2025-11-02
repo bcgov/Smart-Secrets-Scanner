@@ -42,13 +42,23 @@ models/base/**/*.bin
 models/base/**/*.safetensors
 models/base/**/*.pt
 models/base/**/*.pth
+models/base/.locks/
+models/base/**/.locks/
+models/base/**/blobs/
+models/base/**/snapshots/
+models/base/**/.no_exist/
 models/fine-tuned/**/*.bin
 models/fine-tuned/**/*.safetensors
+models/fine-tuned/**/
 models/gguf/**/*.gguf
 outputs/checkpoints/**/*.bin
 outputs/checkpoints/**/*.safetensors
+outputs/checkpoints/**/
 outputs/merged/**/*.bin
 outputs/merged/**/*.safetensors
+
+# Offload directory for model memory management
+offload/
 
 # Keep directory structure
 !models/base/.gitkeep
@@ -63,6 +73,7 @@ data/raw/**/*.txt
 data/raw/**/*.json
 data/processed/**/*.jsonl
 data/evaluation/**/*.jsonl
+outputs/evaluation/
 
 # Keep README files
 !data/**/README.md
@@ -72,6 +83,7 @@ data/evaluation/**/*.jsonl
 # Logs
 outputs/logs/**/*.log
 outputs/logs/**/*.txt
+outputs/logs/*.tfevents.*
 *.log
 
 # OS
@@ -96,3 +108,7 @@ credentials.json
 
 # Training data generation script with example secret patterns
 scripts/generate_simple_training_data.py
+
+# Research documents with example/pseudo secrets for educational purposes
+research/edge_case_improvements.md
+tasks/done/48-research-edge-case-improvements-for-precision.md

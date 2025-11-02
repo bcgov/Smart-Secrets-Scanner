@@ -7,7 +7,39 @@
 ## Project Overview
 This project fine-tunes Llama 3 8B to detect hardcoded secrets and credentials in source code (API keys, tokens, passwords, etc.). It leverages the [ML-Env-CUDA13](https://github.com/bcgov/ML-Env-CUDA13) environment for GPU-accelerated training with LoRA/QLoRA.
 
-## Complete Fine-Tuning Workflow
+## Prerequisites
+- [ML-Env-CUDA13](https://github.com/bcgov/ML-Env-CUDA13) cloned at the same level as this project
+- WSL2 (Ubuntu) with NVIDIA GPU drivers
+- Python 3.10+ (managed by ML-Env-CUDA13)
+- **Install ML-Env-CUDA13 dependencies before running fine-tuning scripts**
+
+### One-time activities
+
+#### 1. ensure in windows you have ubuntu and WSL setup
+see [tasks\done\01-setup-wsl2-ubuntu.md](tasks\done\01-setup-wsl2-ubuntu.md)
+
+#### 2. install NVDIA cuda drivers 
+see [tasks\done\02-install-nvidia-cuda-drivers.md](tasks\done\02-install-nvidia-cuda-drivers.md)
+
+#### 3. clone and run the ml environment 
+see [tasks\done\03-clone-ml-env-cuda13.md](tasks\done\03-clone-ml-env-cuda13.md)
+see [tasks\done\04-run-ml-env-setup.md](tasks\done\04-run-ml-env-setup.md)
+```bash
+bash ../ML-Env-CUDA13/setup_ml_env_wsl.sh
+```
+
+### restarting sessions enabling your environment
+```bash
+source ~/ml_env/bin/activate
+python ../ML-Env-CUDA13/test_pytorch.py
+python ../ML-Env-CUDA13/test_tensorflow.py
+```
+
+---
+
+## Fine-tuning overview
+
+### Complete Fine-Tuning Workflow
 
 ```mermaid
 sequenceDiagram
@@ -48,11 +80,11 @@ sequenceDiagram
     Deploy-->>User: ✅ Fine-tuned model ready!
 ```
 
-## Step-by-Step Process
+### Step-by-Step Process
 
 > **⚠️ Note on Datasets**: Training data files (`.jsonl`) are **intentionally excluded** from this repository via `.gitignore` to avoid triggering GitHub's secret scanning on example secrets. The dataset structure and templates are documented in `data/README.md`. You can generate your own training data using the provided validation script.
 
-### **Phase 1: Data Preparation** 📊
+#### **Phase 1: Data Preparation** 📊
 1. **Create JSONL training data** → `data/processed/smart-secrets-scanner-train.jsonl`
    - 56 examples with instruction/input/output format
    - Covers secrets (AWS, Stripe, GitHub tokens) and safe patterns (env vars, test data)
@@ -61,7 +93,7 @@ sequenceDiagram
 3. **(Optional) Create test files** → `data/evaluation/` or `data/raw/`
    - Complete source files (.py, .js, .yaml) for testing
 
-### **Phase 2: Model Fine-Tuning** 🎓
+#### **Phase 2: Model Fine-Tuning** 🎓
 4. **Download base model** → `models/base/Meta-Llama-3-8B/`
    - From Hugging Face (requires auth token)
    - 15-30 GB download
@@ -72,7 +104,7 @@ sequenceDiagram
 6. **Review training logs** → `outputs/logs/`
    - Check loss curves, learning rate, metrics
 
-### **Phase 3: Model Export** 📦
+#### **Phase 3: Model Export** 📦
 7. **Merge base model + LoRA adapter** → `outputs/merged/`
    - Combine base weights with fine-tuned adapter
    - Creates full model ready for inference
@@ -82,7 +114,7 @@ sequenceDiagram
 9. **Quantize GGUF** (optional)
    - Q4_K_M (smaller, faster), Q8_0 (larger, more accurate)
 
-### **Phase 4: Testing & Deployment** 🧪🚀
+#### **Phase 4: Testing & Deployment** 🧪🚀
 10. **Test with evaluation JSONL** → Calculate precision, recall, F1 score
 11. **Test with raw files** → Feed complete .py/.js/.yaml files to model
 12. **Deploy to Ollama** → Create Modelfile, import GGUF, run locally
@@ -90,7 +122,7 @@ sequenceDiagram
 
 ---
 
-## Folder Structure
+### Folder Structure
 ```
 Llama3-FineTune-Coding/
 ├── adrs/                           # Architecture Decision Records
@@ -119,19 +151,15 @@ Llama3-FineTune-Coding/
 - **`models/fine-tuned/`** → Your trained LoRA adapters
 - **`models/gguf/`** → Quantized models ready for Ollama deployment
 
-## Prerequisites
-- [ML-Env-CUDA13](https://github.com/bcgov/ML-Env-CUDA13) cloned at the same level as this project
-- WSL2 (Ubuntu) with NVIDIA GPU drivers
-- Python 3.10+ (managed by ML-Env-CUDA13)
-- **Install ML-Env-CUDA13 dependencies before running fine-tuning scripts**
-
 ---
 
-## Approach 1: CLI Scripts (Production Workflow)
+### CLI Scripts for workflow
+
+#### Approach 1: CLI Scripts (Production Workflow)
 
 **Best for**: Automation, reproducibility, CI/CD pipelines, production deployment
 
-### Quick Start - CLI
+#### Quick Start - CLI
 
 ```bash
 # Phase 1: Data Preparation (Steps 1-3)

@@ -1,0 +1,35 @@
+# Git Attributes for Smart Secrets Scanner Project
+
+# Mark documentation and research files as linguist-documentation
+# This helps GitHub understand these files contain EXAMPLE secrets for educational purposes
+# and should not trigger secret scanning alerts
+
+# Research and documentation files with example secrets
+research/**/*.md linguist-documentation
+tasks/**/*.md linguist-documentation
+data/README.md linguist-documentation
+data/HOW_TO_USE_DATASET.md linguist-documentation
+EXECUTION_GUIDE.md linguist-documentation
+README.md linguist-documentation
+
+# All markdown files are documentation
+*.md linguist-documentation
+
+# Ensure consistent line endings
+* text=auto
+*.py text eol=lf
+*.sh text eol=lf
+*.ps1 text eol=crlf
+*.md text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.jsonl text eol=lf
+
+# Binary files
+*.bin binary
+*.safetensors binary
+*.gguf binary
+*.pt binary
+*.pth binary
+*.pkl binary
