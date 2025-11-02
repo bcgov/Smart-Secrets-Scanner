@@ -1,0 +1,30 @@
+# Smart Secrets Scanner Fine-Tuning Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core ML/DL frameworks (should already be installed via ML-Env-CUDA13)
+torch>=2.5.1
+tensorflow>=2.20.0
+
+# Keras compatibility for transformers
+tf-keras
+
+# Hugging Face ecosystem
+transformers>=4.36.0
+datasets>=2.14.0
+huggingface_hub>=0.20.0
+tokenizers>=0.15.0
+
+# Fine-tuning libraries
+peft>=0.8.0
+trl>=0.7.0
+bitsandbytes>=0.41.0
+accelerate>=0.25.0
+
+# Utilities
+sentencepiece>=0.1.99
+pyyaml>=6.0
+tqdm>=4.65.0
+
+# Optional: For GGUF conversion (Task 39)
+# llama-cpp-python  # Uncomment when ready for GGUF conversion
+# Install with CUDA support: CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python

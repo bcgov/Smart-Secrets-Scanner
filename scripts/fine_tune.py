@@ -21,6 +21,19 @@ from transformers import (
 )
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from trl import SFTTrainer
+from huggingface_hub import login
+
+# Load Hugging Face token from .env file
+def load_hf_token():
+    """Load Hugging Face token from .env file"""
+    env_path = Path(__file__).parent.parent / '.env'
+    if env_path.exists():
+        with open(env_path, 'r') as f:
+            for line in f:
+                if line.startswith('HUGGING_FACE_TOKEN='):
+                    token = line.split('=', 1)[1].strip().strip('"').strip("'")
+                    return token
+    return None
 
 def load_config(config_path="config/training_config.yaml"):
     """Load training configuration from YAML"""
@@ -123,6 +136,15 @@ def main():
     print("🚀 Smart Secrets Scanner - Fine-Tuning Script")
     print("=" * 70)
     
+    # Authenticate with Hugging Face
+    print("\n🔐 Authenticating with Hugging Face...")
+    token = load_hf_token()
+    if token:
+        login(token=token)
+        print("✅ Authenticated successfully")
+    else:
+        print("⚠️  No token found in .env, attempting without authentication...")
+    
     # Load configuration
     if not Path(args.config).exists():
         print(f"❌ Error: Config file not found: {args.config}")
@@ -189,7 +211,7 @@ def main():
         save_steps=config['training']['save_steps'],
         save_strategy=config['training']['save_strategy'],
         save_total_limit=config['training']['save_total_limit'],
-        evaluation_strategy=config['training']['evaluation_strategy'],
+        eval_strategy=config['training']['evaluation_strategy'],  # Fixed: eval_strategy instead of evaluation_strategy
         eval_steps=config['training']['eval_steps'],
         load_best_model_at_end=config['training']['load_best_model_at_end'],
         metric_for_best_model=config['training']['metric_for_best_model'],
@@ -223,10 +245,7 @@ def main():
         train_dataset=dataset['train'],
         eval_dataset=dataset['validation'],
         args=training_args,
-        dataset_text_field=config['sft']['dataset_text_field'],
-        tokenizer=tokenizer,
-        max_seq_length=config['sft']['max_seq_length'],
-        packing=config['sft']['packing'],
+        processing_class=tokenizer,  # Updated API: tokenizer -> processing_class
     )
     
     print(f"✅ Trainer initialized")

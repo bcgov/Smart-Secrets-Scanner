@@ -93,3 +93,6 @@ Thumbs.db
 *.pem
 *.key
 credentials.json
+
+# Training data generation script with example secret patterns
+scripts/generate_simple_training_data.py
