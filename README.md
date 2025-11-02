@@ -5,7 +5,7 @@
 > **Note:** Repository folder is currently named `Llama3-FineTune-Coding` but project name is **Smart Secrets Scanner**. Folder can be renamed later without affecting functionality.
 
 ## Project Overview
-This project fine-tunes Llama 3 8B to detect hardcoded secrets and credentials in source code (API keys, tokens, passwords, etc.). It leverages the [ML-Env-CUDA13](https://github.com/bcgov/ML-Env-CUDA13) environment for GPU-accelerated training with LoRA/QLoRA.
+This project fine-tunes [Llama 3.1 8B](https://huggingface.co/meta-llama/Llama-3.1-8B) to detect hardcoded secrets and credentials in source code (API keys, tokens, passwords, etc.). It leverages the [ML-Env-CUDA13](https://github.com/bcgov/ML-Env-CUDA13) environment for GPU-accelerated training with LoRA/QLoRA.
 
 ## Prerequisites
 - [ML-Env-CUDA13](https://github.com/bcgov/ML-Env-CUDA13) cloned at the same level as this project
@@ -55,7 +55,7 @@ sequenceDiagram
     Note over Data: data/processed/train.jsonl (56 examples)<br/>data/processed/val.jsonl (16 examples)
     
     User->>Base: 2. Download base model
-    Note over Base: models/base/Meta-Llama-3-8B/<br/>(15-30 GB)
+    Note over Base: models/base/Meta-Llama-3.1-8B/<br/>(15-30 GB)
     
     Data->>Train: 3. Load training data
     Base->>Train: 4. Load base model
@@ -94,8 +94,8 @@ sequenceDiagram
    - Complete source files (.py, .js, .yaml) for testing
 
 #### **Phase 2: Model Fine-Tuning** 🎓
-4. **Download base model** → `models/base/Meta-Llama-3-8B/`
-   - From Hugging Face (requires auth token)
+4. **Download base model** → `models/base/Meta-Llama-3.1-8B/`
+   - From [Hugging Face](https://huggingface.co/meta-llama/Llama-3.1-8B) (requires auth token)
    - 15-30 GB download
 5. **Fine-tune with LoRA/QLoRA** → Creates adapter in `models/fine-tuned/`
    - Use Unsloth or TRL for efficient training
@@ -147,7 +147,7 @@ Llama3-FineTune-Coding/
 
 **Key directories for your Smart Secrets Scanner use case:**
 - **`data/processed/`** → Put your JSONL training data here (e.g., `smart-secrets-scanner-train.jsonl`)
-- **`models/base/`** → Base model downloads (e.g., Llama 3 8B)
+- **`models/base/`** → Base model downloads (e.g., [Llama 3.1 8B](https://huggingface.co/meta-llama/Llama-3.1-8B))
 - **`models/fine-tuned/`** → Your trained LoRA adapters
 - **`models/gguf/`** → Quantized models ready for Ollama deployment
 
