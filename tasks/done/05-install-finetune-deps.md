@@ -1,6 +1,10 @@
 # Task: Install Fine-Tuning Python Libraries
 
-**Status: Backlog**
+**Status: Done**
+
+## Prerequisites (Completed)
+
+✅ **Task 01-04**: Environment setup (WSL2, NVIDIA, ML-Env-CUDA13)  
 
 ## Description
 Install additional Python libraries required for LLM fine-tuning (transformers, peft, bitsandbytes, etc.) in the ML-Env-CUDA13 environment.

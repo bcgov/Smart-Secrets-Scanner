@@ -6,6 +6,15 @@
 **Related to:** Phase 4: Testing & Deployment (Step 12)  
 **Depends on:** Task 39 (GGUF created)
 
+## Prerequisites (Completed)
+
+✅ **Task 01-05**: Environment setup (WSL2, NVIDIA, ML-Env-CUDA13, dependencies)  
+
+**Pending:**  
+⏳ **Task 08**: Fine-tuning Iteration 4 (in-progress)  
+⏳ **Task 38**: Merge LoRA adapter  
+⏳ **Task 39**: Convert to GGUF format (creates GGUF file needed for Modelfile)  
+
 ## Description
 Create `scripts/create_modelfile.py` - script to generate an Ollama Modelfile for deploying the fine-tuned model.
 

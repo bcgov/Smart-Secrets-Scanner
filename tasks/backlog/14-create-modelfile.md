@@ -2,6 +2,15 @@
 
 **Status: Backlog**
 
+## Prerequisites (Completed)
+
+✅ **Task 01-05**: Environment setup (WSL2, NVIDIA, ML-Env-CUDA13, dependencies)  
+
+**Pending:**  
+⏳ **Task 08**: Fine-tuning Iteration 4 (in-progress)  
+⏳ **Task 13/39**: GGUF model created  
+⏳ **Task 40**: Modelfile generation script (to be created)  
+
 ## Description
 Create a Modelfile to define the chat template, system prompt, and parameters for Ollama deployment.
 

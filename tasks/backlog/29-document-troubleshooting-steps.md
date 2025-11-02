@@ -4,6 +4,13 @@
 **Created:** 2025-11-01  
 **Related to:** Documentation and Support
 
+## Prerequisites (Completed)
+
+✅ **Task 01-05**: Environment setup (experience with setup issues)  
+✅ **Task 08**: Fine-tuning runs (experience with training issues)  
+
+**Note:** `EXECUTION_GUIDE.md` already contains some troubleshooting guidance.
+
 ## Description
 Create comprehensive troubleshooting documentation for common CUDA, Python, and fine-tuning issues.
 

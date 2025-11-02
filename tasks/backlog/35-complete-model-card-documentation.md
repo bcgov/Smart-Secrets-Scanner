@@ -5,6 +5,16 @@
 **Created:** 2025-11-01  
 **Related to:** Documentation and Model Sharing
 
+## Prerequisites (Completed)
+
+✅ **Task 00**: Use case defined (Smart Secrets Scanner)  
+✅ **Task 20, 31, 47**: Training and test datasets created  
+✅ **Task 30**: Training configuration documented  
+
+**Pending:**  
+⏳ **Task 08**: Fine-tuning Iteration 4 (in-progress - need final metrics)  
+⏳ **Task 32**: Model evaluation (need comprehensive metrics)  
+
 ## Description
 Complete the model card (`notebooks/model_card.yaml` or `MODEL_CARD.md`) following Hugging Face standards to document the fine-tuned model.
 

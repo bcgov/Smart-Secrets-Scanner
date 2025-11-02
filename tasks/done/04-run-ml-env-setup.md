@@ -1,6 +1,12 @@
 # Task: Run ML-Env-CUDA13 Setup Script
 
-**Status: Backlog**
+**Status: Done**
+
+## Prerequisites (Completed)
+
+✅ **Task 01**: WSL2 Ubuntu configured  
+✅ **Task 02**: NVIDIA drivers and CUDA Toolkit installed  
+✅ **Task 03**: ML-Env-CUDA13 repository cloned  
 
 ## Description
 Run the ML-Env-CUDA13 setup script in WSL2 Ubuntu to create the Python virtual environment and install base dependencies.

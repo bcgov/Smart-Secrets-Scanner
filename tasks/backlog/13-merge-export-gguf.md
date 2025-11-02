@@ -2,6 +2,16 @@
 
 **Status: Backlog**
 
+## Prerequisites (Completed)
+
+✅ **Task 01-05**: Environment setup (WSL2, NVIDIA, ML-Env-CUDA13, dependencies)  
+✅ **Task 22**: Base model downloaded  
+
+**Pending:**  
+⏳ **Task 08**: Fine-tuning Iteration 4 (in-progress - need trained adapter)  
+⏳ **Task 12/38**: Merge script created  
+⏳ **Task 39**: GGUF conversion script created  
+
 ## Description
 Merge the trained LoRA adapter with the base model and export to GGUF format for deployment.
 

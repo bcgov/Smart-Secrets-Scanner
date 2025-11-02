@@ -6,6 +6,15 @@
 **Related to:** Phase 4: Testing & Deployment (Step 13)  
 **Depends on:** Task 40 (Ollama deployment)
 
+## Prerequisites (Completed)
+
+✅ **Task 01-05**: Environment setup  
+
+**Pending:**  
+⏳ **Task 08**: Fine-tuning Iteration 4 (in-progress)  
+⏳ **Task 14/40**: Modelfile created  
+⏳ **Task 15**: Ollama deployment (needed for scan script API calls)  
+
 ## Description
 Create `scripts/scan_secrets.py` - Python script that scans staged files for secrets using the deployed Ollama model, for use in pre-commit hooks.
 

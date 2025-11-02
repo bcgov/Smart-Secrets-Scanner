@@ -2,6 +2,10 @@
 
 **Status: Done**
 
+## Prerequisites
+
+None - foundational infrastructure setup.
+
 ## Description
 Install the required NVIDIA GPU drivers and CUDA Toolkit on your Windows host to enable GPU acceleration in WSL2 Ubuntu.
 

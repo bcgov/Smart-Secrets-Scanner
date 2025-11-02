@@ -1,9 +1,17 @@
 # Task 31: Create Evaluation/Test Dataset
 
-**Status:** Backlog  
+**Status:** Done ✅  
 **Priority:** CRITICAL  
 **Created:** 2025-11-01  
+**Completed:** 2025-11-01  
 **Related to:** Phase 1: Data Preparation (Step 3)
+
+## Prerequisites (Completed)
+
+✅ **Task 00**: Use case defined (Smart Secrets Scanner patterns)  
+✅ **Task 17**: Data directory structure created  
+✅ **Task 18**: JSONL template/format defined  
+✅ **Task 20**: Training dataset created (reference for test set design)  
 
 ## Description
 Create a held-out test dataset (`data/evaluation/smart-secrets-scanner-test.jsonl`) for final model evaluation with truly unseen data.

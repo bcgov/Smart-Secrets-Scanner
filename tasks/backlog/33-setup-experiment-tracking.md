@@ -5,6 +5,13 @@
 **Created:** 2025-11-01  
 **Related to:** Phase 2: Model Fine-Tuning (Step 6)
 
+## Prerequisites (Completed)
+
+✅ **Task 30**: Training configuration created (includes TensorBoard setup)  
+✅ **Task 36**: Fine-tuning script created (reports to TensorBoard)  
+
+**Note:** TensorBoard is already configured in `config/training_config.yaml` (`report_to: "tensorboard"`).
+
 ## Description
 Integrate experiment tracking to systematically log hyperparameters, metrics, and artifacts during training runs.
 

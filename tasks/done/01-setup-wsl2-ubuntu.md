@@ -2,6 +2,10 @@
 
 **Status: Done**
 
+## Prerequisites
+
+None - foundational infrastructure setup.
+
 ## Description
 Enable and configure WSL2 with Ubuntu on your Windows system to provide a Linux environment for GPU-accelerated machine learning.
 

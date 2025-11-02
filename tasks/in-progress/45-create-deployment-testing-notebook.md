@@ -5,6 +5,18 @@
 **Created:** 2025-11-01  
 **Related to:** Phase 4: Testing & Deployment (Steps 12-13), Approach 2: Jupyter Notebooks
 
+## Prerequisites (Completed)
+
+✅ **Task 01-05**: Environment setup (WSL2, NVIDIA, ML-Env-CUDA13, dependencies)  
+✅ **Task 08**: Fine-tuning completed (Iteration 4)  
+✅ **Task 31**: Test dataset created  
+✅ **Task 37**: Inference script created  
+
+**Pending:**  
+⏳ **Task 38**: Merge LoRA adapter (needed for GGUF)  
+⏳ **Task 39**: Convert to GGUF format  
+⏳ **Task 40**: Create Modelfile for Ollama  
+
 ## Description
 Create `notebooks/04_deployment_testing.ipynb` - an interactive notebook for deploying the model to Ollama and testing the pre-commit scanning workflow.
 

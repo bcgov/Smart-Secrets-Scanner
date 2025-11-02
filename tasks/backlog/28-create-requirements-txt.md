@@ -4,6 +4,12 @@
 **Created:** 2025-11-01  
 **Related to:** Setup and Documentation
 
+## Prerequisites (Completed)
+
+✅ **Task 04-05**: ML-Env-CUDA13 environment setup with dependencies  
+
+**Note:** A `requirements.txt` file likely already exists in the project root with the necessary dependencies.
+
 ## Description
 Create a `requirements.txt` file documenting all Python dependencies needed for fine-tuning and deployment.
 

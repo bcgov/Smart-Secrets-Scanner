@@ -5,6 +5,14 @@
 **Priority**: Medium  
 **Assignee**: TBD  
 
+## Prerequisites (Completed)
+
+✅ **Task 20, 47**: JSONL datasets generated (reference for patterns)  
+✅ **Task 00**: Use case defined (Smart Secrets Scanner patterns)  
+
+**Optional Enhancement:**  
+💡 Could be used to generate more diverse training data  
+
 ## Objective
 
 Create realistic synthetic source code files (.py, .js, .yaml, .go, .java) containing secrets and safe patterns. These files serve as:

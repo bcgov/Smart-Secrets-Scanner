@@ -5,6 +5,15 @@
 **Completed**: 2025-11-01  
 **Assignee**: AI Security JSONL Fine-Tune Expert  
 
+## Prerequisites (Completed)
+
+✅ **Task 00**: Use case defined (Smart Secrets Scanner)  
+✅ **Task 17**: Data directory structure created  
+✅ **Task 18**: JSONL template created  
+✅ **Task 19**: Data documentation created  
+
+**Note:** This created the initial 100-example dataset. Later superseded by Task 47 (1000 examples).
+
 ## Objective
 
 Create a production-ready JSONL training dataset for fine-tuning an LLM to detect secrets in code before git commits. This is a proof-of-concept (POC) for the Smart Secrets Scanner use case.

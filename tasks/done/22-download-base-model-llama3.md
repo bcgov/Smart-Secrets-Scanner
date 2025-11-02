@@ -5,6 +5,12 @@
 **Completed:** 2025-11-01  
 **Related to:** Phase 2: Model Fine-Tuning (Step 4)
 
+## Prerequisites (Completed)
+
+✅ **Task 01-05**: Environment setup (WSL2, NVIDIA, ML-Env-CUDA13, dependencies)  
+✅ Hugging Face account created  
+✅ Auth token obtained and stored in `.env`  
+
 ## Description
 Download the base Llama 3.1 8B model from Hugging Face to `models/base/Meta-Llama-3.1-8B/`.
 

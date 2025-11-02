@@ -6,6 +6,15 @@
 **Related to:** Phase 3: Model Export (Step 8)  
 **Depends on:** Task 38 (merged model created)
 
+## Prerequisites (Completed)
+
+✅ **Task 01-05**: Environment setup (WSL2, NVIDIA, ML-Env-CUDA13, dependencies)  
+✅ **Task 22**: Base model downloaded  
+
+**Pending:**  
+⏳ **Task 08**: Fine-tuning Iteration 4 (in-progress)  
+⏳ **Task 38**: Merge LoRA adapter (creates merged model needed for GGUF)  
+
 ## Description
 Create `scripts/convert_to_gguf.py` - script to convert merged Hugging Face model to GGUF format for deployment with Ollama/llama.cpp.
 

@@ -5,6 +5,16 @@
 **Created:** 2025-11-01  
 **Related to:** Phase 4: Testing & Deployment (Step 10)
 
+## Prerequisites (Completed)
+
+✅ **Task 01-05**: Environment setup (WSL2, NVIDIA, ML-Env-CUDA13, dependencies)  
+✅ **Task 31**: Evaluation test dataset created  
+✅ **Task 37**: Inference script created (reference implementation)  
+
+**Pending:**  
+⏳ **Task 08**: Fine-tuning Iteration 4 (in-progress)  
+⏳ **Task 38**: Merge LoRA adapter with base model  
+
 ## Description
 Create an automated evaluation script (`scripts/evaluate.py`) to test the fine-tuned model on the test dataset and generate comprehensive metrics.
 

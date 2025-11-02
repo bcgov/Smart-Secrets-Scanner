@@ -2,6 +2,17 @@
 
 **Status: Backlog**
 
+## Prerequisites (Completed)
+
+✅ **Task 01-05**: Environment setup (WSL2, NVIDIA, ML-Env-CUDA13, dependencies)  
+✅ **Task 31**: Test dataset created  
+
+**Pending:**  
+⏳ **Task 08**: Fine-tuning Iteration 4 (in-progress)  
+⏳ **Task 38**: Merge LoRA adapter  
+⏳ **Task 39**: Convert to GGUF (Task 13)  
+⏳ **Task 40**: Create Modelfile (Task 14)  
+
 ## Description
 Deploy the fine-tuned GGUF model to Ollama and test inference locally.
 

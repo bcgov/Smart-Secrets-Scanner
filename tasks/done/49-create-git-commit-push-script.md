@@ -6,6 +6,12 @@
 **Completed:** 2025-11-02  
 **Related to:** Repository Management & Secret Scanning Prevention
 
+## Prerequisites
+
+None - infrastructure/tooling task.
+
+**Context:** GitHub secret scanning was blocking commits containing example secrets in documentation.
+
 ---
 
 ## Problem Statement

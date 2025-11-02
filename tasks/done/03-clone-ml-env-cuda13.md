@@ -1,6 +1,10 @@
 # Task: Clone ML-Env-CUDA13 Repository
 
-**Status: Backlog**
+**Status: Done**
+
+## Prerequisites (Completed)
+
+✅ **Task 01**: WSL2 Ubuntu environment configured
 
 ## Description
 Clone the ML-Env-CUDA13 repository as a sibling directory to your project to provide the GPU-accelerated Python environment.

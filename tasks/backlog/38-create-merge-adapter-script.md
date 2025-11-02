@@ -6,6 +6,15 @@
 **Related to:** Phase 3: Model Export (Step 7)  
 **Depends on:** Task 36 (fine-tuning complete)
 
+## Prerequisites (Completed)
+
+✅ **Task 01-05**: Environment setup (WSL2, NVIDIA, ML-Env-CUDA13, dependencies)  
+✅ **Task 22**: Base model downloaded  
+✅ **Task 36**: Fine-tuning script created  
+
+**Pending:**  
+⏳ **Task 08**: Fine-tuning Iteration 4 (in-progress - needs to complete)  
+
 ## Description
 Create `scripts/merge_adapter.py` - script to merge base model weights with LoRA adapter to create a standalone model.
 

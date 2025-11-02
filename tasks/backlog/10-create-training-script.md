@@ -2,12 +2,20 @@
 
 **Status: Backlog**
 
+## Prerequisites (Completed)
+
+✅ **Task 01-05**: Environment setup (WSL2, NVIDIA, ML-Env-CUDA13, dependencies)  
+✅ **Task 22**: Base model downloaded  
+✅ **Task 30**: Training configuration file created  
+✅ **Task 36**: Fine-tuning script created (`scripts/fine_tune.py`) ✅  
+✅ **Task 47**: Training dataset (1000 examples) generated  
+
 ## Description
 Create a Python script (`fine_tune.py`) to train a LoRA adapter on your dataset using the base model.
 
 **🔗 Implemented by Task 36: Create Fine-Tuning Python Script**
 
-See `tasks/backlog/36-create-fine-tuning-python-script.md` for the complete implementation of `scripts/fine_tune.py`.
+See `tasks/done/36-create-fine-tuning-python-script.md` for the complete implementation of `scripts/fine_tune.py`.
 
 ## Steps
 - Create `fine_tune.py` in the project root

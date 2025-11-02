@@ -4,6 +4,17 @@
 **Created:** 2025-11-01  
 **Related to:** Phase 4: Testing & Deployment (Step 10)
 
+## Prerequisites (Completed)
+
+✅ **Task 31**: Evaluation test dataset created  
+✅ **Task 37**: Inference script created  
+
+**Pending:**  
+⏳ **Task 08**: Fine-tuning Iteration 4 (in-progress)  
+⏳ **Task 32**: Evaluation script created (or use existing evaluate.py)  
+
+**Note:** This functionality may already be implemented in `scripts/evaluate.py`.
+
 ## Description
 Test the fine-tuned model using evaluation JSONL data to calculate precision, recall, and F1 score.
 

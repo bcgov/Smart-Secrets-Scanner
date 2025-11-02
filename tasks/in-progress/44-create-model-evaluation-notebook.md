@@ -5,6 +5,14 @@
 **Created:** 2025-11-01  
 **Related to:** Phase 3-4: Model Export & Testing (Steps 7-11), Approach 2: Jupyter Notebooks
 
+## Prerequisites (Completed)
+
+✅ **Task 01-05**: Environment setup (WSL2, NVIDIA, ML-Env-CUDA13, dependencies)  
+✅ **Task 22**: Base model downloaded  
+✅ **Task 31**: Evaluation test dataset created  
+✅ **Task 37**: Inference script created (reference implementation)  
+✅ **Task 08**: Fine-tuning run (Iteration 4 in-progress)  
+
 ## Description
 Create `notebooks/03_model_evaluation.ipynb` - an interactive notebook for merging the LoRA adapter, converting to GGUF, and comprehensively evaluating the fine-tuned model.
 

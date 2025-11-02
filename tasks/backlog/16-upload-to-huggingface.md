@@ -2,6 +2,16 @@
 
 **Status: Backlog**
 
+## Prerequisites (Completed)
+
+✅ **Task 01-05**: Environment setup (WSL2, NVIDIA, ML-Env-CUDA13, dependencies)  
+✅ **Task 35**: Model card documentation (for internal docs)  
+
+**Pending:**  
+⏳ **Task 08**: Fine-tuning Iteration 4 (in-progress)  
+⏳ **Task 13/38/39**: Merged model and GGUF created  
+⏳ **Task 32**: Model evaluation (need metrics for documentation)  
+
 ## Description
 Prepare and deploy the LoRA adapter and/or GGUF model for on-premises hosting and internal use. This is for models trained on sensitive data that cannot be published to public repositories like Hugging Face.
 
