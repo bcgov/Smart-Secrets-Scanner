@@ -4,8 +4,14 @@
 
 > **Note:** Repository folder is currently named `Llama3-FineTune-Coding` but project name is **Smart Secrets Scanner**. Folder can be renamed later without affecting functionality.
 
-## Project Overview
-This project fine-tunes [Llama 3.1 8B](https://huggingface.co/meta-llama/Llama-3.1-8B) to detect hardcoded secrets and credentials in source code (API keys, tokens, passwords, etc.). It leverages the [ML-Env-CUDA13](https://github.com/bcgov/ML-Env-CUDA13) environment for GPU-accelerated training with LoRA/QLoRA.
+## Project Overview and Repo Purpose
+This project fine‑tunes Meta Llama 3.1 (8B) using LoRA/QLoRA to detect accidental hardcoded secrets (API keys, tokens, passwords, etc.) in source code. It uses the BC Gov `ML-Env-CUDA13` WSL/conda environment for GPU‑accelerated training and deterministic inference.
+
+The repository provides a reproducible pipeline and scripts to prepare JSONL datasets, train adapters, merge and export models (GGUF), run evaluations, and deploy to runtimes such as Ollama or Hugging Face. This project is primarily an example and experimentation platform for CUDA‑accelerated fine‑tuning — it is not intended to replace production secret‑scanning products (for example, Snyk).
+
+Purpose: demonstrate GPU‑accelerated fine‑tuning and provide reproducible tools and tests for model export and deployment while following BC Gov licensing and governance guidance.
+
+> ⚠️ Important: this repository is a demonstration and research project. The embedded "Smart Secrets Scanner" examples are intended for experimentation and testing of CUDA-accelerated fine-tuning only. They are not a production-grade secret-scanning solution and must not be used as a replacement for established commercial or enterprise secret-scanning tools (for example, Snyk or Wiz). Use this project to learn and validate model workflows, and rely on proven scanning products for operational security.
 
 ## Prerequisites
 - [ML-Env-CUDA13](https://github.com/bcgov/ML-Env-CUDA13) cloned at the same level as this project
