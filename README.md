@@ -1,9 +1,5 @@
 # Smart-Secrets-Scanner
 
-**Fine-tuned Llama 3.1 model designed to detect accidental hardcoded secrets and credentials in source code**
-
-> **Note:** Repository folder is currently named `Llama3-FineTune-Coding` but project name is **Smart Secrets Scanner**. Folder can be renamed later without affecting functionality.
-
 ## Project Overview and Repo Purpose
 This project fine‑tunes Meta Llama 3.1 (8B) using LoRA/QLoRA to detect accidental hardcoded secrets (API keys, tokens, passwords, etc.) in source code. It uses the BC Gov `ML-Env-CUDA13` WSL/conda environment for GPU‑accelerated training and deterministic inference.
 
@@ -246,6 +242,7 @@ If you'd like, I can add a small troubleshooting section to `EXECUTION_GUIDE.md`
 **Best for**: Learning, experimentation, data exploration, iterative development
 
 > ⚠️ NOTE: The notebooks in `notebooks/` are provided as illustrative examples only. The project’s tested and validated workflow uses the scripts in the `scripts/` folder (for example, `scripts/fine_tune.py`, `scripts/validate_dataset.py`, `scripts/evaluate.py`). I have exercised the scripts-based approach locally (path example: `C:\Users\RICHFREM\source\repos\Smart-Secrets-Scanner\scripts`) — the notebooks themselves have not been executed or validated as part of the current tests. Use the notebooks for exploration only and prefer the scripts for reproducible runs.
+⚠️ NOTE: The notebooks in `notebooks/` are provided as illustrative examples only. The project’s tested and validated workflow uses the scripts in the `scripts/` folder (for example, `scripts/fine_tune.py`, `scripts/validate_dataset.py`, `scripts/evaluate.py`). I have exercised the scripts-based approach locally (path example: `./scripts`) — the notebooks themselves have not been executed or validated as part of the current tests. Use the notebooks for exploration only and prefer the scripts for reproducible runs.
 
 ### Quick Start - Notebooks
 
