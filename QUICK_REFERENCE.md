@@ -2,6 +2,8 @@
 
 **Smart Secrets Scanner Fine-Tuning - Command Cheatsheet**
 
+> ⚠️ Important: this quick reference is for reproducible experiments and demos. The Smart Secrets Scanner examples are intended to demonstrate CUDA-accelerated fine-tuning and model export only. They are not a production-grade secret-scanning solution and should not replace commercial or enterprise scanners (for example, Snyk or Wiz).
+
 ## Setup (One-time)
 
 ```bash

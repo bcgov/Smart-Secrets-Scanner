@@ -5,6 +5,8 @@
 
 This guide provides step-by-step instructions to fine-tune Llama 3 for secret detection and deploy it to Ollama.
 
+> ⚠️ Important: this guide and the accompanying scripts are provided for demonstration and research purposes only. The "Smart Secrets Scanner" examples are intended to show how CUDA-accelerated fine-tuning and model export can be performed. They are not a production-grade secret-scanning solution and should not be used as a replacement for established commercial or enterprise secret-scanning tools (for example, Snyk or Wiz). Use these instructions to reproduce experiments and validate workflows; rely on proven scanning products for operational security.
+
 ---
 
 ## Table of Contents
