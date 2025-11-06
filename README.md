@@ -205,6 +205,31 @@ ollama create smart-secrets-scanner -f Modelfile
 python scripts/scan_secrets.py --file examples/test.py
 ```
 
+### Important note: local GGUF vs deployed model differences
+
+If you see differing behaviour between a locally-run GGUF model (for example, running with `ollama run` or a local gguf file) and a model referenced via a Modelfile that points to a Hugging Face-deployed version, this is expected to sometimes occur — and is important to document:
+
+- Observed: the local GGUF model produced correct/expected detections, but switching the Modelfile to point at the Hugging Face hosted model produced different outputs (fewer alerts / different classification).
+
+Possible causes and quick checklist to diagnose:
+
+1. Model variant mismatch: ensure the Modelfile `FROM` path references the exact same model and revision you tested locally (same commit/gguf file). A different model ID, revision, or quantization will change outputs.
+2. Quantization and format: local GGUF may be quantized (Q4/K/M etc.); the deployed HF model may be a different numeric format (FP16, FP32) or different tokenizer settings.
+3. Tokenizer / special tokens: confirm the tokenizer and special tokens are identical. Small tokenizer differences change prompts and results.
+4. Generation/config differences: check temperature, top_p, seed, max_new_tokens, and any system/prompt wrappers used by the hosted deployment.
+5. Prompt formatting and instruction wrapper: some deployments add instruction/system wrappers or strip newlines. Compare the exact prompt payload you send locally vs to HF endpoint.
+6. Merge step: verify you merged the LoRA adapter into the base correctly for the deployed model (or that the hosted model already includes the adapter weights).
+7. Environment and runtime differences: model serving infra (batching, safety filters, or post-processing) can change outputs.
+
+Suggested reproduction steps:
+
+1. Save the exact prompt you used locally (including wrappers).
+2. Run a deterministic local inference with a fixed seed and generation params and save the response.
+3. Call the hosted model with the identical prompt and generation parameters (where possible) and compare responses.
+4. If outputs differ, check the model revision, tokenizer files, and Modelfile `FROM` line. Also compare any Modelfile-run-time environment variables or post-processing steps.
+
+If you'd like, I can add a small troubleshooting section to `EXECUTION_GUIDE.md` with exact curl/examples for calling the HF endpoint and `ollama run` side-by-side to make this comparison repeatable.
+
 📖 **For detailed CLI instructions, see [EXECUTION_GUIDE.md](EXECUTION_GUIDE.md)**  
 📋 **For quick command reference, see [QUICK_REFERENCE.md](QUICK_REFERENCE.md)**
 
@@ -270,6 +295,78 @@ See [SCRIPTS_TASKS_MAPPING.md](SCRIPTS_TASKS_MAPPING.md) for complete script doc
 - **[data/README.md](data/README.md)** - Data folder structure and workflow
 - **[tasks/](tasks/)** - Task tracking (backlog, in-progress, done)
 - **[adrs/](adrs/)** - Architecture Decision Records
+
+## Governance, licensing and repository requirements
+
+This repository is published under the Apache License 2.0. The following items are recommended or required for BC Government GitHub repositories and our internal policies:
+
+- Include a `LICENSE` file at the repository root (this project already contains `LICENSE` — Apache-2.0).
+- Keep a short license/footer in top-level documentation (see footer at the bottom of this README).
+- Add an Apache license header to distributed source files (scripts, Python files, etc.). See the `LICENSE` file for the exact wording. A short example header to include near the top of scripts is:
+
+```text
+Copyright 2025 British Columbia
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+```
+
+If you run CI checks, add a check to ensure new/modified source files include the required header.
+
+Prefer referencing repository-provided verification scripts rather than generic commands. See "Verify the environment & scripts" below.
+
+## Verify the environment & scripts
+
+Prefer the repository-provided verification scripts rather than generic instructions. Common checks and commands:
+
+WSL / ML-Env verification (ML-Env-CUDA13 sibling repo)
+```bash
+# from inside WSL and with ML-Env-CUDA13 at the sibling path
+source ~/ml_env/bin/activate
+python ../ML-Env-CUDA13/test_pytorch.py
+python ../ML-Env-CUDA13/test_tensorflow.py
+```
+
+Repository-specific verification
+```bash
+# Setup and install dependencies (WSL/Bash)
+bash scripts/setup_env.sh
+bash scripts/install_deps.sh
+
+# Validate training data
+python scripts/validate_dataset.py data/processed/smart-secrets-scanner-train.jsonl
+
+# Run evaluation (after training/merge)
+python scripts/evaluate.py --test-data data/evaluation/smart-secrets-scanner-test.jsonl
+
+# Run pre-commit / scanner locally against a file
+python scripts/scan_secrets.py --file examples/test.py
+```
+
+If your environment requires `pytest`/`flake8`, run them after activating the CUDA-enabled ML-Env Python environment (ML-Env-CUDA13) so tests run with the correct CUDA/tooling present. For WSL/Bash:
+```bash
+source ~/ml_env/bin/activate
+```
+On Windows PowerShell (example):
+```powershell
+.\cuda_clean_env\Scripts\Activate
+```
+Prefer using repository wrapper scripts and the provided verification scripts (for example `bash scripts/install_deps.sh`, `python ../ML-Env-CUDA13/test_pytorch.py`) instead of relying on global installs.
+
+---
+
+````
+
+---
+
+Copyright 2025 British Columbia
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+````
 
 ## Notes
 - All scripts designed for Bash/WSL2 (not PowerShell/Windows CMD)

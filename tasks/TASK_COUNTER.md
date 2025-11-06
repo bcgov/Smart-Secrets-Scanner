@@ -1,6 +1,6 @@
 # Task Counter
 
-Current task number: **55**
+Current task number: **58**
 
 ## Instructions
 
@@ -20,6 +20,10 @@ When creating a new task:
 - 20: Generate JSONL dataset for Smart Secrets Scanner POC (done)
 - 21: Generate synthetic raw source code files (backlog)
 - 22: Next available task number
+ - 55: Compare local GGUF outputs vs hosted model (backlog)
+ - 56: Add Modelfile troubleshooting section to EXECUTION_GUIDE.md (backlog)
+ - 57: Create tokenizer/token-id comparison script (backlog)
+
 
 ## Task Status Folders
 
