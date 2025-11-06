@@ -245,6 +245,8 @@ If you'd like, I can add a small troubleshooting section to `EXECUTION_GUIDE.md`
 
 **Best for**: Learning, experimentation, data exploration, iterative development
 
+> ⚠️ NOTE: The notebooks in `notebooks/` are provided as illustrative examples only. The project’s tested and validated workflow uses the scripts in the `scripts/` folder (for example, `scripts/fine_tune.py`, `scripts/validate_dataset.py`, `scripts/evaluate.py`). I have exercised the scripts-based approach locally (path example: `C:\Users\RICHFREM\source\repos\Smart-Secrets-Scanner\scripts`) — the notebooks themselves have not been executed or validated as part of the current tests. Use the notebooks for exploration only and prefer the scripts for reproducible runs.
+
 ### Quick Start - Notebooks
 
 Open and run notebooks in order:
