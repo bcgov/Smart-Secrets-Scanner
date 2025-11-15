@@ -15,6 +15,29 @@ Purpose: demonstrate GPU‑accelerated fine‑tuning and provide reproducible to
 - Python 3.10+ (managed by ML-Env-CUDA13)
 - **Install ML-Env-CUDA13 dependencies before running fine-tuning scripts**
 
+### CUDA ML environment (WSL) — recommended
+
+This repository includes a dedicated setup guide with step-by-step WSL/ML-Env instructions and a WSL-specific pinned requirements file. If you are using WSL/Ubuntu for GPU-enabled work, follow `CUDA-ML-ENV-SETUP.md` and prefer the WSL-specific requirements file:
+
+- See: `CUDA-ML-ENV-SETUP.md` for a complete, reproducible setup workflow (WSL, NVIDIA drivers, staged installs).
+- Use `requirements-wsl.txt` when installing inside WSL — it contains the PyTorch CUDA wheel index and tested CUDA pins (for example `torch==2.8.0+cu126`).
+
+Recommended install approach (short):
+
+1. Activate the ML-Env environment you created via the ML-Env script:
+
+```bash
+source ~/ml_env/bin/activate
+```
+
+2. Install the CUDA-aware pins first (use `requirements-wsl.txt`):
+
+```bash
+pip install -r requirements-wsl.txt
+```
+
+3. Run the ML-Env verification scripts described in `CUDA-ML-ENV-SETUP.md` (for example `test_pytorch.py` and `test_tensorflow.py`) before installing the rest of the repository dependencies.
+
 ### One-time activities
 
 #### 1. ensure in windows you have ubuntu and WSL setup
@@ -334,6 +357,8 @@ source ~/ml_env/bin/activate
 python ../ML-Env-CUDA13/test_pytorch.py
 python ../ML-Env-CUDA13/test_tensorflow.py
 ```
+
+If you are installing in WSL, run `pip install -r requirements-wsl.txt` (see `CUDA-ML-ENV-SETUP.md` for the recommended staged install). The top-level `requirements.txt` is intended as a portable list; for CUDA-enabled installs prefer `requirements-wsl.txt`.
 
 Repository-specific verification
 ```bash
