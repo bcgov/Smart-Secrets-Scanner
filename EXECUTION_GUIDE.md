@@ -111,6 +111,34 @@ python -c "import torch; print(f'CUDA Available: {torch.cuda.is_available()}')"
 pip list | grep -E "transformers|peft|trl|torch"
 ```
 
+### WSL / CUDA-specific install (recommended for WSL users)
+
+If you are running inside WSL/Ubuntu (the recommended setup for GPU work on Windows) follow the `CUDA-ML-ENV-SETUP.md` guide and prefer the WSL-specific requirements file shipped with this repo. This ensures you install CUDA-aware PyTorch wheels and other tested pins before attempting heavy builds.
+
+- See: `CUDA-ML-ENV-SETUP.md` for a reproducible WSL + ML-Env setup workflow (NVIDIA drivers, staged installs, verification scripts).
+- Use: `requirements-wsl.txt` inside WSL to install the CUDA-pinned wheels (for example `torch==2.8.0+cu126`).
+
+Recommended quick flow (WSL/Ubuntu):
+
+```bash
+# 1) Activate the ML-Env virtualenv created by the ML-Env setup script
+source ~/ml_env/bin/activate
+
+# 2) Install CUDA-aware pinned wheels first (from `requirements-wsl.txt`)
+pip install -r requirements-wsl.txt
+
+# 3) Run verification scripts (from ML-Env-CUDA13)
+python ../ML-Env-CUDA13/test_pytorch.py
+python ../ML-Env-CUDA13/test_tensorflow.py
+
+# 4) If verification passes, install any remaining repo requirements (if needed)
+pip install -r requirements.txt
+```
+
+Notes:
+- `requirements-wsl.txt` contains a PyTorch wheel index and CUDA-specific pins; do not use these pins on CPU-only or non-WSL hosts.
+- For heavier packages that often require build steps (for example `xformers`, `llama-cpp-python`, `bitsandbytes`) install them after verifying PyTorch is working to avoid wasting build time.
+
 ### Step 1.3: Download Base Model
 
 ```bash
