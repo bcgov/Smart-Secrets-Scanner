@@ -1,6 +1,6 @@
 # Scripts to Tasks Mapping
 
-**Last Updated**: 2025-11-01  
+**Last Updated**: 2025-11-16  
 **Task Counter**: 42
 
 This document maps all scripts in `scripts/` to their corresponding task implementations.
@@ -9,8 +9,7 @@ This document maps all scripts in `scripts/` to their corresponding task impleme
 
 | Script | Status | Task | Purpose |
 |--------|--------|------|---------|
-| `setup_env.sh` | ✅ Exists | Task 04 | Run ML-Env-CUDA13 setup |
-| `install_deps.sh` | ✅ Exists | Task 05 | Install Python dependencies |
+| `setup_cuda_env.py` | ✅ Exists | Task 04, 05 | Unified CUDA environment setup |
 | `download_model.sh` | ✅ Exists | Task 06, 22 | Download base Llama 3 model |
 | `fine_tune.sh` | ⚠️ Incomplete | Task 08, 11 | Wrapper for `fine_tune.py` (missing) |
 | `infer.sh` | ⚠️ Incomplete | Task 09 | Wrapper for `inference.py` (missing) |
@@ -45,16 +44,13 @@ This document maps all scripts in `scripts/` to their corresponding task impleme
 
 ### **Phase 1: Setup & Preparation**
 ```bash
-# 1. Setup environment (Task 04)
-bash scripts/setup_env.sh
+# 1. Setup environment & install dependencies (Task 04, 05)
+sudo python3 scripts/setup_cuda_env.py --staged --recreate
 
-# 2. Install dependencies (Task 05)
-bash scripts/install_deps.sh
-
-# 3. Download base model (Task 06, 22)
+# 2. Download base model (Task 06, 22)
 bash scripts/download_model.sh
 
-# 4. Validate training data (Task 34) - NEW
+# 3. Validate training data (Task 34) - NEW
 python scripts/validate_dataset.py data/processed/smart-secrets-scanner-train.jsonl
 ```
 
@@ -98,7 +94,7 @@ pre-commit install
 ## 📊 Task Mapping Summary
 
 ### Scripts Already Created (Shell Wrappers)
-- ✅ 5 shell scripts exist (`setup_env.sh`, `install_deps.sh`, `download_model.sh`, `fine_tune.sh`, `infer.sh`)
+- ✅ 4 shell scripts exist (`setup_cuda_env.py`, `download_model.sh`, `fine_tune.sh`, `infer.sh`)
 - ⚠️ 2 are incomplete (call missing Python files)
 
 ### Scripts to Create (Python Implementations)
@@ -145,15 +141,14 @@ pre-commit install
 ## 🔗 Dependencies Graph
 
 ```
-Task 04 (setup_env.sh)
-  └─> Task 05 (install_deps.sh)
-       └─> Task 06/22 (download_model.sh)
-            └─> Task 30 (training_config.yaml)
-                 └─> Task 36 (fine_tune.py)
-                      └─> Task 38 (merge_adapter.py)
-                           └─> Task 39 (convert_to_gguf.py)
-                                └─> Task 40 (create_modelfile.py)
-                                     └─> Task 41 (scan_secrets.py)
+Task 04 (setup_cuda_env.py - unified setup & deps)
+  └─> Task 06/22 (download_model.sh)
+       └─> Task 30 (training_config.yaml)
+            └─> Task 36 (fine_tune.py)
+                 └─> Task 38 (merge_adapter.py)
+                      └─> Task 39 (convert_to_gguf.py)
+                           └─> Task 40 (create_modelfile.py)
+                                └─> Task 41 (scan_secrets.py)
 
 Task 31 (test dataset) --> Task 32 (evaluate.py)
 Task 34 (validate_dataset.py) --> Task 36 (fine_tune.py)
