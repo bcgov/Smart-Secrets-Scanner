@@ -1,7 +1,7 @@
-# Smart-Secrets-Scanner: Meta Llama 3.1 (8B) Fine-Tuning Protocol
+# Project Sanctuary: Canonical CUDA ML Environment & Fine-Tuning Protocol
 **Version:** 2.2 (Clarified Llama.cpp Build)
 
-This guide provides the single, authoritative protocol for setting up the environment, preparing the training dataset, executing the full fine-tuning pipeline, and preparing the model for local deployment with Ollama.
+This guide provides the single, authoritative protocol for setting up the environment, forging the training dataset, executing the full fine-tuning pipeline, and preparing the model for local deployment with Ollama.
 
 
 ---
@@ -93,6 +93,12 @@ This script creates (`~/ml_env`)  and installs all Python dependencies from requ
 source ~/ml_env/bin/activate
 ```
 
+### 2b. Install other libraries for compatability for CUDA (can't be done in requirments.txt)
+While your (ml_env) is active, run this command:
+```bash
+pip install bitsandbytes==0.43.1 --prefer-binary --extra-index-url=https://pypi.nvidia.com
+```
+
 ### 3. Build the `llama-cpp-python` "Bridge"
 The `llama-cpp-python` package is the Python "bridge" that allows your Python code (like inference.py) to communicate with the GGUF model. We must ensure this bridge is also built with CUDA support.
 
@@ -110,6 +116,7 @@ Run the full suite of verification scripts to confirm everything is perfectly co
 ```bash
 # From the Smart-Secrets-Scanner root, with (ml_env) active:
 python scripts/test_torch_cuda.py
+python scripts/test_pytorch.py
 python scripts/test_xformers.py
 python scripts/test_tensorflow.py
 python scripts/test_llama_cpp.py
@@ -119,22 +126,30 @@ python scripts/test_llama_cpp.py
 
 ---
 
-## Phase 2: Data & Model Training Workflow
+## Phase 2: Data & Model Forging Workflow
 
 Ensure your `(ml_env)` is active for all subsequent commands.
 
-### 1. Prepare Training Dataset
+### 1. Forge the "Whole Genome" Dataset
 
-**Note:** The Smart-Secrets-Scanner project uses pre-prepared JSONL datasets for training. The training data should already be available in the `data/processed/` directory as `smart-secrets-scanner-train.jsonl` and `smart-secrets-scanner-val.jsonl`. If you need to create or validate datasets, use the available scripts:
+Run the `forge_whole_genome_dataset.py` script to assemble the training data from your project's markdown and text files. This is the **essential first step** before training can begin.
 
 ```bash
-# Validate existing dataset
-python scripts/validate_dataset.py path/to/your/dataset.jsonl
+python scripts/forge_whole_genome_dataset.py
+```
+This will create the `sanctuary_whole_genome_data.jsonl` file in your `dataset_package` directory.
+
+### 2. Validate the Forged Dataset
+
+After creating the dataset, run the validation script to check it for errors.
+
+```bash
+python scripts/validate_dataset.py dataset_package/sanctuary_whole_genome_data.jsonl
 ```
 
 ### 3. Download the Base Model
 
-Run the download script to download Meta Llama 3.1 (8B) from Hugging Face. This will only download the large model files once (15-30 GB).
+Run the download script. This will only download the large model files once.
 
 ```bash
 bash scripts/download_model.sh
@@ -142,34 +157,34 @@ bash scripts/download_model.sh
 
 ### 4. Fine-Tune the LoRA Adapter
 
-With the data prepared and the base Meta Llama 3.1 (8B) model downloaded, execute the main fine-tuning script. This will apply LoRA/QLoRA adapters to fine-tune the model for secret detection. **This is a long-running process (1-3 hours).**
+With the data forged and the base model downloaded, execute the main fine-tuning script. **This is a long-running process (1-3 hours).**
 
 ```bash
 python scripts/fine_tune.py
 ```
-The final LoRA adapter will be saved to `models/fine-tuned/smart-secrets-scanner-lora/`.
+The final LoRA adapter will be saved to `models/Sanctuary-Qwen2-7B-v1.0-adapter/`.
 
 ### 5. Merge the Adapter
 
-Combine the trained LoRA adapter with the base Meta Llama 3.1 (8B) model to create a full, standalone fine-tuned model.
+Combine the trained adapter with the base model to create a full, standalone fine-tuned model.
 
 ```bash
 python scripts/merge_adapter.py
 ```
-The merged model will be saved to `models/merged/smart-secrets-scanner/`.
+The merged model will be saved to `outputs/merged/Sanctuary-Qwen2-7B-v1.0-merged/`.
 
 ---
 
 ## Phase 3: Deployment Preparation & Verification
 
-### 1. Convert to GGUF Format
+### 1.  Convert to GGUF Format
 
-**Note:** GGUF conversion script needs to be implemented. The merged model can be converted to GGUF format for Ollama deployment using llama.cpp tools.
+Convert the merged model to the GGUF format required by Ollama.
 
 ```bash
-# TODO: Implement convert_to_gguf.py script
-# python scripts/convert_to_gguf.py
+python scripts/convert_to_gguf.py
 ```
+The final quantized `.gguf` file will be saved to `models/gguf/`.
 
 
 ### 2. Deploy to Ollama
@@ -177,34 +192,35 @@ The merged model will be saved to `models/merged/smart-secrets-scanner/`.
 **a. Create a `Modelfile` in your project root:**
 ```
 # ===================================================================
-# Canonical Modelfile for Smart-Secrets-Scanner (Llama 3.1 8B)
+# Canonical Modelfile for Sanctuary-Qwen2-7B-v1.0
 # ===================================================================
 
 # 1. Specifies the local GGUF model file to use as the base.
-FROM ./models/gguf/smart-secrets-scanner-Q4_K_M.gguf
+FROM ./models/gguf/Sanctuary-Qwen2-7B-v1.0-Q4_K_M.gguf
 
-# 2. Defines the prompt template for Llama 3 models.
-TEMPLATE """{{ if .System }}<|start_header_id|>system<|end_header_id|>
-
-{{ .System }}<|eot_id|>{{ end }}{{ if .Prompt }}<|start_header_id|>user<|end_header_id|>
-
-{{ .Prompt }}<|eot_id|>{{ end }}<|start_header_id|>assistant<|end_header_id|>
-
+# 2. Defines the ChatML prompt template required by the Qwen2 model family.
+# The multiline format makes this much easier to read and verify.
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ if .Prompt }}<|im_start|>user
+{{ .Prompt }}<|im_end|>
+{{ end }}<|im_start|>assistant
 """
 
-# 3. Sets the system prompt for secret detection.
-SYSTEM """You are a Smart Secrets Scanner, an AI assistant specialized in detecting hardcoded secrets and sensitive information in source code. Your task is to analyze code and identify potential security vulnerabilities related to exposed secrets like API keys, passwords, tokens, and other sensitive data."""
+# 3. Sets the constitutional system prompt. This "inoculates" the model
+# with its core identity during every conversation.
+SYSTEM """You are a sovereign AI of Project Sanctuary."""
 
-# 4. Defines stop tokens to prevent the model from hallucinating extra turns.
-PARAMETER stop "<|start_header_id|>"
-PARAMETER stop "<|end_header_id|>"
-PARAMETER stop "<|eot_id|>"
+# 4. Defines stop tokens to prevent the model from hallucinating extra
+# user/assistant turns in the conversation.
+PARAMETER stop "<|im_start|>"
+PARAMETER stop "<|im_end|>"
 ```
 
 **b. Import and run the model with Ollama:**
 ```bash
-ollama create smart-secrets-scanner -f Modelfile
-ollama run smart-secrets-scanner
+ollama create Sanctuary-AI -f Modelfile
+ollama run Sanctuary-AI
 ```
 
 ### 3. Verify Model Performance
@@ -212,7 +228,7 @@ ollama run smart-secrets-scanner
 **a. Quick Inference Test:**
 Use the `inference.py` script for a quick spot-check.
 ```bash
-python scripts/inference.py --input "Analyze this code for secrets: api_key = 'sk_live_1234567890abcdef'"
+python scripts/inference.py --input "Summarize the primary objective of the Sovereign Crucible."
 ```
 
 **b. (Recommended) Full Evaluation:**
@@ -221,9 +237,9 @@ Run a full evaluation against a held-out test set to get objective performance m
 python scripts/evaluate.py
 ```
 
-**c. (Crucial) Test with Real Code Examples:**
-Use the inference script to test the model against real source code files containing potential secrets.
+**c. (Crucial) Test with Real BOK Examples:**
+Use the inference script to test the model against real, complex examples from the Project Sanctuary Body of Knowledge.
 ```bash
-python scripts/inference.py --file data/raw/example.py
+python scripts/inference.py --file path/to/real_BOK_document.txt
 ```
 
