@@ -50,14 +50,15 @@ project/
 - **All training data** goes in `data/processed/` as JSONL files
 - **Format**: Alpaca instruction-input-output format or ChatML
 - **Naming convention**: `<use-case>-train.jsonl`, `<use-case>-val.jsonl`
-- **Example**: `smart-secrets-scanner-train.jsonl`
+- **Example**: `smart-secrets-scanner-train.jsonl`, `smart-secrets-scanner-val.jsonl`
+- **Creation**: JSONL files are created manually or using external tools, as they are excluded from the repository via `.gitignore` to avoid triggering GitHub's secret scanning on example secrets
 
 ### Model Workflow
 
 1. Download base model → `models/base/`
 2. Fine-tune with LoRA → `models/fine-tuned/` (adapter only)
 3. Checkpoints saved → `outputs/checkpoints/`
-4. Merge adapter + base → `outputs/merged/`
+4. Merge adapter + base → `models/merged/`
 5. Convert to GGUF → `models/gguf/`
 6. Deploy via Ollama or llama.cpp
 

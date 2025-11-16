@@ -12,9 +12,11 @@ Clone the ML-Env-CUDA13 repository as a sibling directory to your project to pro
 ## Steps
 - Navigate to your repos folder
 - Clone ML-Env-CUDA13 from GitHub
+- Clone llama.cpp repository (required for GGUF conversion)
 - Ensure directory structure:
   - `~/repos/ML-Env-CUDA13/`
-  - `~/repos/Llama3-FineTune-Coding/`
+  - `~/repos/Smart-Secrets-Scanner/`
+  - `~/repos/llama.cpp/`
 
 ## Resources
 - https://github.com/bcgov/ML-Env-CUDA13

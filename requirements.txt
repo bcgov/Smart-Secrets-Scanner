@@ -1,30 +1,32 @@
-# Smart Secrets Scanner Fine-Tuning Dependencies
-# Install with: pip install -r requirements.txt
+# Use the PyTorch CUDA 12.6 wheel index. This is the known-good index.
+--extra-index-url https://download.pytorch.org/whl/cu126
 
-# Core ML/DL frameworks (should already be installed via ML-Env-CUDA13)
-torch>=2.5.1
-tensorflow>=2.20.0
+# --- CORE ML & FINE-TUNING STACK ---
+# Pinned to PyTorch 2.9.0 to match xformers dependency.
+torch==2.9.0+cu126
+torchvision==0.24.0+cu126
+torchaudio==2.9.0+cu126
 
-# Keras compatibility for transformers
-tf-keras
+# Pinned to a known-good, compatible set for the PyTorch version above.
+transformers==4.41.2
+peft==0.10.0
+trl==0.8.6
+bitsandbytes==0.43.1
+datasets==2.19.0
+accelerate==0.30.1
+xformers
+llama-cpp-python
+pyyaml  # <-- NEW: For reading YAML config files
 
-# Hugging Face ecosystem
-transformers>=4.36.0
-datasets>=2.14.0
-huggingface_hub>=0.20.0
-tokenizers>=0.15.0
+# Keras compatibility layer
+tf-keras==2.20.1
 
-# Fine-tuning libraries
-peft>=0.8.0
-trl>=0.7.0
-bitsandbytes>=0.41.0
-accelerate>=0.25.0
+# --- MODEL PUBLISHING & DEPLOYMENT ---
+huggingface-hub
 
-# Utilities
-sentencepiece>=0.1.99
-pyyaml>=6.0
-tqdm>=4.65.0
-
-# Optional: For GGUF conversion (Task 39)
-# llama-cpp-python  # Uncomment when ready for GGUF conversion
-# Install with CUDA support: CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python
+# --- CORE RAG & ORCHESTRATOR STACK ---
+langchain
+chromadb
+google-generativeai
+ollama
+gpt4all

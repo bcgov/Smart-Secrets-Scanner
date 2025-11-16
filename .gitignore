@@ -54,8 +54,8 @@ models/gguf/**/*.gguf
 outputs/checkpoints/**/*.bin
 outputs/checkpoints/**/*.safetensors
 outputs/checkpoints/**/
-outputs/merged/**/*.bin
-outputs/merged/**/*.safetensors
+models/merged/**/*.bin
+models/merged/**/*.safetensors
 
 # Offload directory for model memory management
 offload/
@@ -63,9 +63,9 @@ offload/
 # Keep directory structure
 !models/base/.gitkeep
 !models/fine-tuned/.gitkeep
+!models/merged/.gitkeep
 !models/gguf/.gitkeep
 !outputs/checkpoints/.gitkeep
-!outputs/merged/.gitkeep
 
 # Data files (potentially sensitive or large)
 data/raw/**/*.csv
@@ -85,6 +85,9 @@ outputs/logs/**/*.log
 outputs/logs/**/*.txt
 outputs/logs/*.tfevents.*
 *.log
+
+# Generated snapshot files
+smart_secrets_scanner_snapshot.txt
 
 # OS
 .DS_Store

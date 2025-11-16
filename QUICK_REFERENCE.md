@@ -10,11 +10,11 @@
 # Clone repos
 cd ~/repos
 git clone https://github.com/bcgov/ML-Env-CUDA13.git
-git clone <your-repo> Llama3-FineTune-Coding
+git clone <your-repo> Smart-Secrets-Scanner
 git clone https://github.com/ggerganov/llama.cpp.git
 
 # Setup environment
-cd Llama3-FineTune-Coding
+cd Smart-Secrets-Scanner
 bash scripts/setup_env.sh
 bash scripts/install_deps.sh
 bash scripts/download_model.sh
@@ -88,9 +88,9 @@ pre-commit run --all-files
 ```
 config/training_config.yaml          # Training hyperparameters
 data/processed/*.jsonl               # Training/validation data
-models/base/Meta-Llama-3-8B/         # Base model (15-30 GB)
+models/base/Meta-Llama-3.1-8B/         # Base model (15-30 GB)
 models/fine-tuned/*-lora/            # LoRA adapter (~200 MB)
-outputs/merged/smart-secrets-scanner/ # Merged model (15-30 GB)
+models/merged/smart-secrets-scanner/ # Merged model (15-30 GB)
 models/gguf/*.gguf                   # Quantized models (4-15 GB)
 Modelfile                            # Ollama deployment config
 ```

@@ -34,18 +34,18 @@ rm -rf ~/ml_env
 2. Run the all-in-one setup script (requires sudo for system packages):
 
 ```bash
-sudo python3 forge/OPERATION_PHOENIX_FORGE/scripts/setup_cuda_env.py --staged --recreate
+sudo python3 scripts/setup_cuda_env.py --staged --recreate
 ```
 
 3. Activate the new environment and verify:
 
 ```bash
 source ~/ml_env/bin/activate
-python forge/OPERATION_PHOENIX_FORGE/scripts/test_torch_cuda.py
-python forge/OPERATION_PHOENIX_FORGE/scripts/test_xformers.py
-python forge/OPERATION_PHOENIX_FORGE/scripts/test_tensorflow.py
-python forge/OPERATION_PHOENIX_FORGE/scripts/test_pytorch.py
-python forge/OPERATION_PHOENIX_FORGE/scripts/test_llama_cpp.py
+python scripts/test_torch_cuda.py
+python scripts/test_xformers.py
+python scripts/test_tensorflow.py
+python scripts/test_pytorch.py
+python scripts/test_llama_cpp.py
 ```
 
 4. Install git-lfs for large file support:
@@ -66,17 +66,30 @@ see [tasks\done\02-install-nvidia-cuda-drivers.md](tasks\done\02-install-nvidia-
 see [tasks\done\03-clone-ml-env-cuda13.md](tasks\done\03-clone-ml-env-cuda13.md)
 see [tasks\done\04-run-ml-env-setup.md](tasks\done\04-run-ml-env-setup.md)
 ```bash
-sudo python3 forge/OPERATION_PHOENIX_FORGE/scripts/setup_cuda_env.py --staged --recreate
+```bash
+sudo python3 scripts/setup_cuda_env.py --staged --recreate
+```
+
+3. Activate the new environment and verify:
+
+```bash
+source ~/ml_env/bin/activate
+python scripts/test_torch_cuda.py
+python scripts/test_xformers.py
+python scripts/test_tensorflow.py
+python scripts/test_pytorch.py
+python scripts/test_llama_cpp.py
+```
 ```
 
 ### restarting sessions enabling your environment
 ```bash
 source ~/ml_env/bin/activate
-python forge/OPERATION_PHOENIX_FORGE/scripts/test_torch_cuda.py
-python forge/OPERATION_PHOENIX_FORGE/scripts/test_xformers.py
-python forge/OPERATION_PHOENIX_FORGE/scripts/test_tensorflow.py
-python forge/OPERATION_PHOENIX_FORGE/scripts/test_pytorch.py
-python forge/OPERATION_PHOENIX_FORGE/scripts/test_llama_cpp.py
+python scripts/test_torch_cuda.py
+python scripts/test_xformers.py
+python scripts/test_tensorflow.py
+python scripts/test_pytorch.py
+python scripts/test_llama_cpp.py
 ```
 
 ---
@@ -107,7 +120,7 @@ sequenceDiagram
     Note over Train: outputs/checkpoints/<br/>outputs/logs/
     
     Train->>Export: 6. Merge base + adapter
-    Note over Export: outputs/merged/<br/>(full model weights)
+    Note over Export: models/merged/<br/>(full model weights)
     
     Export->>Export: 7. Convert to GGUF
     Note over Export: models/gguf/<br/>smart-secrets-scanner.gguf
@@ -128,59 +141,87 @@ sequenceDiagram
 
 ```mermaid
 graph TD
-    subgraph "Phase 1: Environment & Data"
-        A["<i class='fa fa-cogs'></i> setup_cuda_env.py<br/>*Creates Python environment*<br/>&nbsp;"]
-        B["<i class='fa fa-pen-ruler'></i> Manual Data Assembly<br/>*Creates training JSONL*<br/>&nbsp;"]
-        A_out(" <i class='fa fa-folder-open'></i> ml_env venv")
+    subgraph "Phase 1: Environment & Data (30-60 min)"
+        A["<i class='fa fa-cogs'></i> setup_cuda_env.py<br/>*Unified environment setup*<br/>*Installs CUDA + PyTorch*<br/>&nbsp;"]
+        A1["<i class='fa fa-check-circle'></i> Verify Environment<br/>*Run test scripts*<br/>*Check CUDA availability*<br/>&nbsp;"]
+        B["<i class='fa fa-pen-ruler'></i> Manual Data Assembly<br/>*Create training JSONL*<br/>*56 train + 16 val examples*<br/>&nbsp;"]
+        B1["<i class='fa fa-search'></i> validate_dataset.py<br/>*Validate data quality*<br/>*Check schema & balance*<br/>&nbsp;"]
+        A_out(" <i class='fa fa-folder-open'></i> ~/ml_env venv")
+        A1_out(" <i class='fa fa-check'></i> Environment Verified")
         B_out(" <i class='fa fa-file-alt'></i> smart-secrets-scanner-train.jsonl")
+        B1_out(" <i class='fa fa-certificate'></i> Data Validated")
     end
 
-    subgraph "Phase 2: Model Forging"
-        C0["<i class='fa fa-download'></i> download_model.sh<br/>*Downloads base model*<br/>&nbsp;"]
-        C["<i class='fa fa-microchip'></i> fine_tune.py<br/>*Performs QLoRA fine-tuning*<br/>&nbsp;"]
-        C0_out(" <i class='fa fa-cube'></i> Base Model")
+    subgraph "Phase 2: Model Forging (1-3 hours)"
+        C0["<i class='fa fa-download'></i> download_model.sh<br/>*Downloads Llama 3.1 8B*<br/>*15-30 GB from HF*<br/>&nbsp;"]
+        C1["<i class='fa fa-cog'></i> training_config.yaml<br/>*Configure LoRA params*<br/>*Set batch size, epochs*<br/>&nbsp;"]
+        C["<i class='fa fa-microchip'></i> fine_tune.py<br/>*QLoRA fine-tuning*<br/>*3-5 epochs, monitor loss*<br/>&nbsp;"]
+        C2["<i class='fa fa-chart-line'></i> Monitor Training<br/>*TensorBoard logs*<br/>*Check validation loss*<br/>&nbsp;"]
+        C0_out(" <i class='fa fa-cube'></i> Base Model (15-30GB)")
+        C1_out(" <i class='fa fa-file-code'></i> Training Config")
         C_out(" <i class='fa fa-puzzle-piece'></i> LoRA Adapter")
+        C2_out(" <i class='fa fa-chart-bar'></i> Training Metrics")
     end
 
-    subgraph "Phase 3: Packaging & Publishing (Planned)"
-        D1["<i class='fa fa-compress-arrows-alt'></i> merge_adapter.py<br/>*Merges base + adapter*<br/>&nbsp;"]
-        D2["<i class='fa fa-compress-arrows-alt'></i> convert_to_gguf.py<br/>*Converts to GGUF*<br/>&nbsp;"]
-        E["<i class='fa fa-upload'></i> upload_to_huggingface.py<br/>*Publishes model to Hub*<br/>&nbsp;"]
-        D1_out(" <i class='fa fa-puzzle-piece'></i> Merged Model")
-        D2_out(" <i class='fa fa-cube'></i> GGUF Model")
+    subgraph "Phase 3: Packaging & Publishing (30-60 min)"
+        D1["<i class='fa fa-compress-arrows-alt'></i> merge_adapter.py<br/>*Merge base + LoRA*<br/>*Create full model*<br/>&nbsp;"]
+        D2["<i class='fa fa-compress-arrows-alt'></i> convert_to_gguf.py<br/>*Convert to GGUF*<br/>*Q4_K_M + Q8_0 quantization*<br/>&nbsp;"]
+        D3["<i class='fa fa-vial'></i> Test Merged Model<br/>*Quick inference test*<br/>*Verify model works*<br/>&nbsp;"]
+        E["<i class='fa fa-upload'></i> upload_to_huggingface.py<br/>*Publish to HF Hub*<br/>*Share with community*<br/>&nbsp;"]
+        D1_out(" <i class='fa fa-puzzle-piece'></i> Merged Model (15GB)")
+        D2_out(" <i class='fa fa-cube'></i> GGUF Model (4-8GB)")
+        D3_out(" <i class='fa fa-check'></i> Model Verified")
         E_out(" <i class='fa fa-cloud'></i> Hugging Face Hub")
     end
 
-    subgraph "Phase 4: Local Deployment (Planned)"
-        F["<i class='fa fa-file-code'></i> create_modelfile.py<br/>*Prepares model for Ollama*<br/>&nbsp;"]
+    subgraph "Phase 4: Local Deployment (15-30 min)"
+        F["<i class='fa fa-file-code'></i> create_modelfile.py<br/>*Generate Ollama Modelfile*<br/>*Configure model settings*<br/>&nbsp;"]
+        F1["<i class='fa fa-terminal'></i> ollama create<br/>*Import GGUF to Ollama*<br/>*Create local model*<br/>&nbsp;"]
+        F2["<i class='fa fa-play'></i> Test Ollama Model<br/>*Interactive testing*<br/>*Verify secret detection*<br/>&nbsp;"]
         F_out(" <i class='fa fa-terminal'></i> Ollama Modelfile")
+        F1_out(" <i class='fa fa-robot'></i> Ollama Model")
+        F2_out(" <i class='fa fa-comments'></i> Model Tested")
     end
     
-    subgraph "Phase 5: E2E Verification "
-        H["<i class='fa fa-power-off'></i> python scripts/evaluate.py<br/>*Runs evaluation tests*<br/>&nbsp;"]
-        I["<i class='fa fa-bolt'></i> Evaluate JSONL<br/>*Tests with evaluation data*<br/>*Calculates metrics*"]
-        J["<i class='fa fa-brain'></i> Test Raw Files<br/>*Tests with source files*<br/>*Checks detections*"]
+    subgraph "Phase 5: E2E Verification (30-60 min)"
+        H["<i class='fa fa-power-off'></i> python scripts/evaluate.py<br/>*Run comprehensive eval*<br/>*Calculate metrics*<br/>&nbsp;"]
+        I["<i class='fa fa-bolt'></i> Evaluate JSONL<br/>*Test with eval dataset*<br/>*Precision/Recall/F1*<br/>&nbsp;"]
+        J["<i class='fa fa-brain'></i> Test Raw Files<br/>*Feed source code files*<br/>*Check secret detection*<br/>&nbsp;"]
         I_out(" <i class='fa fa-file-invoice'></i> Evaluation Results")
         J_out(" <i class='fa fa-file-signature'></i> Inference Outputs")
-        K_out(" <i class='fa fa-check-circle'></i> Verified Model")
+        K_out(" <i class='fa fa-check-circle'></i> Model Verified & Ready")
     end
 
     A -- Creates --> A_out;
-    A_out --> B;
+    A_out --> A1;
+    A1 -- Verifies --> A1_out;
+    A1_out --> B;
     B -- Creates --> B_out;
-    B_out --> C0;
+    B_out --> B1;
+    B1 -- Validates --> B1_out;
+    B1_out --> C0;
     C0 -- Downloads --> C0_out;
-    C0_out --> C;
-    C -- Creates --> C_out;
-    C_out --> D1;
+    C0_out --> C1;
+    C1 -- Configures --> C1_out;
+    C1_out --> C;
+    C -- Trains --> C_out;
+    C_out --> C2;
+    C2 -- Monitors --> C2_out;
+    C2_out --> D1;
     D1 -- Creates --> D1_out;
     D1_out --> D2;
     D2 -- Creates --> D2_out;
-    D2_out --> E;
+    D2_out --> D3;
+    D3 -- Verifies --> D3_out;
+    D3_out --> E;
     E -- Pushes to --> E_out;
     E_out -- Pulled for --> F;
     F -- Creates --> F_out;
-    F_out -- Enables --> H;
+    F_out --> F1;
+    F1 -- Imports --> F1_out;
+    F1_out --> F2;
+    F2 -- Tests --> F2_out;
+    F2_out -- Enables --> H;
     H -- Executes --> I;
     H -- Executes --> J;
     I -- Yields --> I_out;
@@ -191,8 +232,8 @@ graph TD
     classDef artifact fill:#e1f5fe,stroke:#333,stroke-width:1px,stroke-dasharray: 5 5;
     classDef planned fill:#fff3e0,stroke:#888,stroke-width:1px,stroke-dasharray: 3 3;
 
-    class A,B,C0,C,D1,D2,E,F,H,I,J script;
-    class A_out,B_out,C0_out,C_out,D1_out,D2_out,E_out,F_out,I_out,J_out,K_out artifact;
+    class A,A1,B,B1,C0,C1,C,C2,D1,D2,D3,E,F,F1,F2,H,I,J script;
+    class A_out,A1_out,B_out,B1_out,C0_out,C1_out,C_out,C2_out,D1_out,D2_out,D3_out,E_out,F_out,F1_out,F2_out,I_out,J_out,K_out artifact;
     class D1,D2,E,F,H,I,J,D1_out,D2_out,E_out,F_out,I_out,J_out,K_out planned;
 ```
 
@@ -221,7 +262,7 @@ graph TD
    - Check loss curves, learning rate, metrics
 
 #### **Phase 3: Model Export** 📦
-7. **Merge base model + LoRA adapter** → `outputs/merged/`
+7. **Merge base model + LoRA adapter** → `models/merged/`
    - Combine base weights with fine-tuned adapter
    - Creates full model ready for inference
 8. **Convert to GGUF format** → `models/gguf/smart-secrets-scanner.gguf`
@@ -240,7 +281,7 @@ graph TD
 
 ### Folder Structure
 ```
-Llama3-FineTune-Coding/
+Smart-Secrets-Scanner/
 ├── adrs/                           # Architecture Decision Records
 ├── scripts/                        # Bash scripts for setup, training, inference
 ├── notebooks/                      # Jupyter notebook templates
@@ -252,19 +293,22 @@ Llama3-FineTune-Coding/
 ├── models/                         # Model files
 │   ├── base/                       # Base pre-trained models (downloaded)
 │   ├── fine-tuned/                 # Fine-tuned adapters (LoRA/QLoRA)
+│   ├── merged/                     # Merged models (base + adapter)
 │   └── gguf/                       # Quantized models for deployment
 ├── outputs/                        # Training outputs
 │   ├── checkpoints/                # Training checkpoints
 │   ├── logs/                       # Training logs and metrics
-│   └── merged/                     # Merged models (base + adapter)
+│   └── temp/                       # Temporary files during training
 ├── .gitignore                      # Excludes large model files and sensitive data
 └── README.md                       # Project documentation
+```
 ```
 
 **Key directories for your Smart Secrets Scanner use case:**
 - **`data/processed/`** → Put your JSONL training data here (e.g., `smart-secrets-scanner-train.jsonl`)
 - **`models/base/`** → Base model downloads (e.g., [Llama 3.1 8B](https://huggingface.co/meta-llama/Llama-3.1-8B))
 - **`models/fine-tuned/`** → Your trained LoRA adapters
+- **`models/merged/`** → Merged full models (base + adapter)
 - **`models/gguf/`** → Quantized models ready for Ollama deployment
 
 ---

@@ -142,7 +142,7 @@ Monitor these metrics during fine-tuning:
 from transformers import pipeline
 
 # Load fine-tuned model
-generator = pipeline('text-generation', model='./outputs/merged/smart-secrets-scanner')
+generator = pipeline('text-generation', model='./models/merged/smart-secrets-scanner')
 
 # Test input
 test_code = 'aws_key = "AKIAIOSFODNN7EXAMPLE"'

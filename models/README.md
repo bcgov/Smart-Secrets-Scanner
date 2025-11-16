@@ -34,6 +34,6 @@ This directory contains all model files, including base models, fine-tuned adapt
 
 1. Download base model → `base/`
 2. Fine-tune with LoRA → Save adapter to `fine-tuned/`
-3. Merge adapter + base → Save to `outputs/merged/`
+3. Merge adapter + base → Save to `models/merged/`
 4. Convert to GGUF → Save to `gguf/`
 5. Deploy via Ollama or llama.cpp

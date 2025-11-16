@@ -3,7 +3,7 @@
 **Last Updated**: 2025-11-01  
 **Estimated Total Time**: 4-6 hours (depending on GPU)
 
-This guide provides step-by-step instructions to fine-tune Llama 3 for secret detection and deploy it to Ollama.
+This guide provides step-by-step instructions to fine-tune Llama 3.1 for secret detection and deploy it to Ollama.
 
 > ⚠️ Important: this guide and the accompanying scripts are provided for demonstration and research purposes only. The "Smart Secrets Scanner" examples are intended to show how CUDA-accelerated fine-tuning and model export can be performed. They are not a production-grade secret-scanning solution and should not be used as a replacement for established commercial or enterprise secret-scanning tools (for example, Snyk or Wiz). Use these instructions to reproduce experiments and validate workflows; rely on proven scanning products for operational security.
 
@@ -46,14 +46,14 @@ cd ~/repos  # or your preferred location
 git clone https://github.com/bcgov/ML-Env-CUDA13.git
 
 # 2. Clone this project
-git clone <your-repo-url> Llama3-FineTune-Coding
+git clone <your-repo-url> Smart-Secrets-Scanner
 
 # 3. Clone llama.cpp (for GGUF conversion)
 git clone https://github.com/ggerganov/llama.cpp.git
 
 # Verify structure
 ls -la
-# Should see: ML-Env-CUDA13/ Llama3-FineTune-Coding/ llama.cpp/
+# Should see: ML-Env-CUDA13/ Smart-Secrets-Scanner/ llama.cpp/
 ```
 
 ---
@@ -62,22 +62,31 @@ ls -la
 
 **Estimated Time**: 30-60 minutes
 
-### Step 1.1: Setup ML-Env-CUDA13
+### Step 1.1: Setup CUDA ML Environment
 
 ```bash
-cd ~/repos/Llama3-FineTune-Coding
+cd ~/repos/Smart-Secrets-Scanner
 
-# Run environment setup
-bash scripts/setup_env.sh
+# Run the unified setup script (requires sudo for system packages)
+sudo python3 scripts/setup_cuda_env.py --staged --recreate
 ```
 
 **What this does**:
-- Checks for ML-Env-CUDA13 sibling directory
-- Runs ML-Env-CUDA13 setup scripts
-- Creates Python virtual environment
-- Installs CUDA toolkit and dependencies
+- Installs system prerequisites (Python 3.11, etc.) if missing
+- Creates a clean Python virtual environment at `~/ml_env`
+- Installs CUDA-enabled PyTorch and all ML dependencies from `requirements-wsl.txt`
+- Handles staged installation to prevent pip conflicts
 
 **Expected Output**:
+```
+=== CUDA ML Environment Setup ===
+Installing system prerequisites...
+✓ Python 3.11 installed
+✓ Virtual environment created at ~/ml_env
+✓ CUDA-enabled PyTorch installed
+✓ All dependencies installed
+✓ Setup complete!
+```
 ```
 === Setting up ML-Env-CUDA13 Environment ===
 Running ML-Env-CUDA13 WSL setup script...
@@ -86,63 +95,67 @@ Running ML-Env-CUDA13 WSL setup script...
 ✓ Setup complete!
 ```
 
-### Step 1.2: Install Python Dependencies
+### WSL / CUDA-specific install (recommended for WSL users)
+
+This repository uses a unified setup script that handles the entire CUDA ML environment setup in one command. Follow `CUDA-ML-ENV-SETUP.md` for complete WSL + CUDA instructions.
+
+### STEP 1: WSL CUDA INSTALL SETUP
+
+**Quick Setup (WSL/Ubuntu)**:
 
 ```bash
-# Install fine-tuning libraries
-bash scripts/install_deps.sh
+# 1) Start with a clean slate
+deactivate 2>/dev/null || true
+rm -rf ~/ml_env
+
+# 2) Run the all-in-one setup script (requires sudo)
+sudo python3 scripts/setup_cuda_env.py --staged --recreate
+
+# 3) Activate and verify
+source ~/ml_env/bin/activate
+python scripts/test_torch_cuda.py
+python scripts/test_xformers.py
+python scripts/test_pytorch.py
 ```
 
-**What this does**:
-- Activates ML-Env-CUDA13 Python environment
-- Installs: transformers, datasets, accelerate, bitsandbytes, peft, trl, torch
-- Installs evaluation tools: sklearn, wandb (optional)
+**What the script does**:
+- Installs system prerequisites (Python 3.11, etc.)
+- Creates virtual environment at `~/ml_env`
+- Installs CUDA-enabled PyTorch from `requirements-wsl.txt`
+- Performs staged installation to avoid pip conflicts
 
-**Verify Installation**:
+**Notes**:
+- The script uses `requirements-wsl.txt` with CUDA-pinned wheels (e.g., `torch==2.8.0+cu126`)
+- Do not use these pins on CPU-only or non-WSL systems
+- For large file support, install git-lfs: `sudo apt update && sudo apt install git-lfs`
+
+### STEP 2: Step Verify Environment Setup
+
 ```bash
-# Activate environment
-source ../ML-Env-CUDA13/ml_env/bin/activate
 
-# Check CUDA availability
+# Verify CUDA availability
 python -c "import torch; print(f'CUDA Available: {torch.cuda.is_available()}')"
 # Expected: CUDA Available: True
+
+# Run verification scripts
+python scripts/test_torch_cuda.py
+python scripts/test_xformers.py
+python scripts/test_pytorch.py
 
 # Check installed packages
 pip list | grep -E "transformers|peft|trl|torch"
 ```
 
-### WSL / CUDA-specific install (recommended for WSL users)
+**What this does**:
+- Activates the virtual environment created by the setup script
+- Verifies PyTorch can access CUDA
+- Runs additional verification tests for key libraries
+- Confirms all ML dependencies are installed
 
-If you are running inside WSL/Ubuntu (the recommended setup for GPU work on Windows) follow the `CUDA-ML-ENV-SETUP.md` guide and prefer the WSL-specific requirements file shipped with this repo. This ensures you install CUDA-aware PyTorch wheels and other tested pins before attempting heavy builds.
-
-- See: `CUDA-ML-ENV-SETUP.md` for a reproducible WSL + ML-Env setup workflow (NVIDIA drivers, staged installs, verification scripts).
-- Use: `requirements-wsl.txt` inside WSL to install the CUDA-pinned wheels (for example `torch==2.8.0+cu126`).
-
-Recommended quick flow (WSL/Ubuntu):
-
-```bash
-# 1) Activate the ML-Env virtualenv created by the ML-Env setup script
-source ~/ml_env/bin/activate
-
-# 2) Install CUDA-aware pinned wheels first (from `requirements-wsl.txt`)
-pip install -r requirements-wsl.txt
-
-# 3) Run verification scripts (from ML-Env-CUDA13)
-python ../ML-Env-CUDA13/test_pytorch.py
-python ../ML-Env-CUDA13/test_tensorflow.py
-
-# 4) If verification passes, install any remaining repo requirements (if needed)
-pip install -r requirements.txt
-```
-
-Notes:
-- `requirements-wsl.txt` contains a PyTorch wheel index and CUDA-specific pins; do not use these pins on CPU-only or non-WSL hosts.
-- For heavier packages that often require build steps (for example `xformers`, `llama-cpp-python`, `bitsandbytes`) install them after verifying PyTorch is working to avoid wasting build time.
-
-### Step 1.3: Download Base Model
+### STEP 3:  Download Base Model
 
 ```bash
-# Download Llama 3 8B (15-30 GB)
+# Download Llama 3.1 8B (15-30 GB)
 bash scripts/download_model.sh
 ```
 
@@ -155,12 +168,12 @@ pip install huggingface-cli
 huggingface-cli login
 
 # Download model
-huggingface-cli download meta-llama/Meta-Llama-3-8B --local-dir models/base/Meta-Llama-3-8B
+huggingface-cli download meta-llama/Meta-Llama-3.1-8B --local-dir models/base/Meta-Llama-3.1-8B
 ```
 
 **Expected Output**:
 ```
-models/base/Meta-Llama-3-8B/
+models/base/Meta-Llama-3.1-8B/
 ├── config.json
 ├── generation_config.json
 ├── model-00001-of-00004.safetensors
@@ -173,7 +186,7 @@ models/base/Meta-Llama-3-8B/
 └── tokenizer_config.json
 ```
 
-### Step 1.4: Build llama.cpp (for GGUF conversion)
+### STEP 4: Build llama.cpp (for GGUF conversion)
 
 ```bash
 cd ~/repos/llama.cpp
@@ -187,14 +200,14 @@ make LLAMA_CUBLAS=1
 
 ---
 
-## Phase 2: Data Preparation
+### STEP 5: Data Preparation
 
 **Estimated Time**: 15-30 minutes
 
 ### Step 2.1: Verify Training Data
 
 ```bash
-cd ~/repos/Llama3-FineTune-Coding
+cd ~/repos/Smart-Secrets-Scanner
 
 # Check existing datasets
 ls -lh data/processed/
@@ -203,7 +216,7 @@ ls -lh data/processed/
 # - smart-secrets-scanner-val.jsonl (16 examples)
 ```
 
-### Step 2.2: Validate Data Quality
+### STEP 6: Validate Data Quality
 
 ```bash
 # Run data validation script
@@ -239,7 +252,7 @@ Validating data/processed/smart-secrets-scanner-train.jsonl...
 ✅ Dataset is ready for training!
 ```
 
-### Step 2.3: Create Test Dataset (Optional but Recommended)
+### STEP 7: Create Test Dataset (Optional but Recommended)
 
 **Task**: Generate 20 new examples for final evaluation
 
@@ -251,13 +264,13 @@ Validating data/processed/smart-secrets-scanner-train.jsonl...
 
 See `tasks/backlog/31-create-evaluation-test-dataset.md` for detailed instructions.
 
-### Step 2.4: Create Training Configuration
+### STEP 8: Create Training Configuration
 
 Create `config/training_config.yaml`:
 
 ```yaml
 model:
-  name: "models/base/Meta-Llama-3-8B"
+  name: "models/base/Meta-Llama-3.1-8B"
   max_seq_length: 2048
   load_in_4bit: true
 
@@ -291,22 +304,22 @@ data:
 
 ---
 
-## Phase 3: Model Fine-Tuning
+### STEP 9: Model Fine-Tuning
 
 **Estimated Time**: 1-3 hours (depends on GPU and epochs)
 
-### Step 3.1: Start Training
+#### Step 9.1: Start Training
 
 ```bash
 # Activate environment
-source ../ML-Env-CUDA13/ml_env/bin/activate
+source ~/ml_env/bin/activate
 
 # Start fine-tuning
 python scripts/fine_tune.py
 ```
 
 **What happens**:
-1. Loads base Llama 3 8B model with 4-bit quantization
+1. Loads base Llama 3.1 8B model with 4-bit quantization
 2. Applies LoRA adapters (only ~0.5% of parameters trained)
 3. Trains for 5 epochs on 56 examples
 4. Saves checkpoints every 50 steps
@@ -327,7 +340,7 @@ Training complete!
 ✅ LoRA adapter saved to: models/fine-tuned/smart-secrets-scanner-lora
 ```
 
-### Step 3.2: Monitor Training (in another terminal)
+#### Step 9.2: Monitor Training (in another terminal)
 
 ```bash
 # View TensorBoard
@@ -342,7 +355,7 @@ tensorboard --logdir outputs/logs
 - **Learning Rate**: Should follow warmup schedule
 - **GPU Memory**: Monitor with `nvidia-smi`
 
-### Step 3.3: Review Training Logs
+#### Step 9.3: Review Training Logs
 
 ```bash
 # Check final metrics
@@ -357,18 +370,18 @@ ls -lh outputs/checkpoints/
 
 ---
 
-## Phase 4: Model Export
+### STEP 10: Model Export
 
 **Estimated Time**: 30-60 minutes
 
-### Step 4.1: Merge LoRA Adapter with Base Model
+#### Step 10.1: Merge LoRA Adapter with Base Model
 
 ```bash
 # Merge adapter into full model
 python scripts/merge_adapter.py \
-  --base-model models/base/Meta-Llama-3-8B \
+  --base-model models/base/Meta-Llama-3.1-8B \
   --adapter models/fine-tuned/smart-secrets-scanner-lora \
-  --output outputs/merged/smart-secrets-scanner \
+  --output models/merged/smart-secrets-scanner \
   --verify
 ```
 
@@ -381,18 +394,18 @@ python scripts/merge_adapter.py \
 💾 Saving merged model...
 
 ✅ Merge Complete!
-📁 Merged model: outputs/merged/smart-secrets-scanner/ (~15 GB)
+📁 Merged model: models/merged/smart-secrets-scanner/ (~15 GB)
 
 🧪 Verifying model...
 ✅ Model generates output successfully
 ```
 
-### Step 4.2: Convert to GGUF Format
+#### Step 10.2: Convert to GGUF Format
 
 ```bash
 # Convert to GGUF with quantization
 python scripts/convert_to_gguf.py \
-  --model outputs/merged/smart-secrets-scanner \
+  --model models/merged/smart-secrets-scanner \
   --output models/gguf/smart-secrets-scanner.gguf \
   --quantize Q4_K_M Q8_0
 ```
@@ -413,16 +426,16 @@ Created files:
 
 ---
 
-## Phase 5: Testing & Evaluation
+### STEP 11: Testing & Evaluation
 
 **Estimated Time**: 30-60 minutes
 
-### Step 5.1: Test Inference with Merged Model
+#### Step 11.1: Test Inference with Merged Model
 
 ```bash
 # Quick test with merged model
 python scripts/inference.py \
-  --model outputs/merged/smart-secrets-scanner \
+  --model models/merged/smart-secrets-scanner \
   --input 'api_key = "sk_live_1234567890abcdef"'
 ```
 
@@ -434,12 +447,12 @@ python scripts/inference.py \
     secret key (sk_live_...) that should not be hardcoded.
 ```
 
-### Step 5.2: Run Full Evaluation on Test Set
+#### Step 11.2: Run Full Evaluation on Test Set
 
 ```bash
 # Evaluate on test dataset
 python scripts/evaluate.py \
-  --model outputs/merged/smart-secrets-scanner \
+  --model models/merged/smart-secrets-scanner \
   --test-data data/evaluation/smart-secrets-scanner-test.jsonl
 ```
 
@@ -462,22 +475,22 @@ Secret            0.93      0.96      0.94
 - Recall: > 95% (catch almost all secrets)
 - F1 Score: > 92%
 
-### Step 5.3: Test with Real Code Files
+#### Step 11.3: Test with Real Code Files
 
 ```bash
 # Test on actual source files
 python scripts/inference.py \
   --batch data/raw/python/ \
-  --model outputs/merged/smart-secrets-scanner
+  --model models/merged/smart-secrets-scanner
 ```
 
 ---
 
-## Phase 6: Deployment
+### STEP 12: Deployment
 
 **Estimated Time**: 15-30 minutes
 
-### Step 6.1: Create Ollama Modelfile
+#### Step 12.1: Create Ollama Modelfile
 
 ```bash
 # Generate Modelfile
@@ -494,7 +507,7 @@ python scripts/create_modelfile.py \
    Quantization: Q4_K_M
 ```
 
-### Step 6.2: Import to Ollama
+#### Step 12.2: Import to Ollama
 
 ```bash
 # Start Ollama (if not running)
@@ -513,7 +526,7 @@ writing manifest
 success
 ```
 
-### Step 6.3: Test Ollama Deployment
+#### Step 12.3: Test Ollama Deployment
 
 ```bash
 # Interactive test
@@ -530,7 +543,7 @@ Secrets Manager.
 >>> /bye
 ```
 
-### Step 6.4: Setup Pre-Commit Hooks
+### Step 13: Setup Pre-Commit Hooks (NOT RELATED TO MODEL TRAINING)
 
 ```bash
 # Install pre-commit framework
@@ -556,7 +569,7 @@ pre-commit install
 pre-commit run --all-files
 ```
 
-### Step 6.5: Test Pre-Commit Hook
+### Step 14: Test Pre-Commit Hook (NOT RELATED TO MODEL TRAINING)
 
 ```bash
 # Create test file with secret
@@ -651,7 +664,7 @@ max_grad_norm: 1.0
 **Solution**:
 ```bash
 # Ensure correct environment is activated
-source ../ML-Env-CUDA13/ml_env/bin/activate
+source ~/ml_env/bin/activate
 
 # Reinstall dependencies
 bash scripts/install_deps.sh

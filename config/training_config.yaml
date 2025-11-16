@@ -88,7 +88,7 @@ sft:
 # Output Configuration
 output:
   adapter_path: "models/fine-tuned/smart-secrets-scanner-lora"
-  merged_model_path: "outputs/merged/smart-secrets-scanner"
+  merged_model_path: "models/merged/smart-secrets-scanner"
   gguf_output_path: "models/gguf"
 
 # Alpaca Prompt Template
