@@ -26,8 +26,8 @@ cd ../llama.cpp && make LLAMA_CUBLAS=1
 ## Training Workflow
 
 ```bash
-cd ~/repos/Llama3-FineTune-Coding
-source ../ML-Env-CUDA13/ml_env/bin/activate
+cd ~/repos/Smart-Secrets-Scanner
+source ~/ml_env/bin/activate
 
 # 1. Validate data
 python scripts/validate_dataset.py data/processed/smart-secrets-scanner-train.jsonl

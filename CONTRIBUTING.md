@@ -19,18 +19,18 @@ guide for contributors working within BC Government repositories.
 
 4. Formatting and tests
    - Use the project's existing style. Run linters and tests locally.
-   - This repository and sibling `ML-Env-CUDA13` provide smoke/verification scripts — prefer running them first to validate environment setup.
+   - This repository provides smoke/verification scripts — prefer running them first to validate environment setup.
      ```bash
-     # WSL / ML-Env (ML-Env-CUDA13 should be a sibling repo)
+     # WSL / Unified ML Environment
      source ~/ml_env/bin/activate
-     python ../ML-Env-CUDA13/test_pytorch.py
-     python ../ML-Env-CUDA13/test_tensorflow.py
+     python scripts/test_pytorch.py
+     python scripts/test_tensorflow.py
      ```
      On Windows (PowerShell):
      ```powershell
-     .\cuda_clean_env\Scripts\Activate
-     python ..\ML-Env-CUDA13\test_pytorch.py
-     python ..\ML-Env-CUDA13\test_tensorflow.py
+     .\ml_env\Scripts\Activate
+     python scripts\test_pytorch.py
+     python scripts\test_tensorflow.py
      ```
 
    - Repository-specific verification (recommended):

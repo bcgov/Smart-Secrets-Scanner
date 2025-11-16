@@ -24,19 +24,35 @@ This repository includes a dedicated setup guide with step-by-step WSL/ML-Env in
 
 Recommended install approach (short):
 
-1. Activate the ML-Env environment you created via the ML-Env script:
+1. Start with a clean slate (remove any old environment):
+
+```bash
+deactivate 2>/dev/null || true
+rm -rf ~/ml_env
+```
+
+2. Run the all-in-one setup script (requires sudo for system packages):
+
+```bash
+sudo python3 forge/OPERATION_PHOENIX_FORGE/scripts/setup_cuda_env.py --staged --recreate
+```
+
+3. Activate the new environment and verify:
 
 ```bash
 source ~/ml_env/bin/activate
+python forge/OPERATION_PHOENIX_FORGE/scripts/test_torch_cuda.py
+python forge/OPERATION_PHOENIX_FORGE/scripts/test_xformers.py
+python forge/OPERATION_PHOENIX_FORGE/scripts/test_tensorflow.py
+python forge/OPERATION_PHOENIX_FORGE/scripts/test_pytorch.py
+python forge/OPERATION_PHOENIX_FORGE/scripts/test_llama_cpp.py
 ```
 
-2. Install the CUDA-aware pins first (use `requirements-wsl.txt`):
+4. Install git-lfs for large file support:
 
 ```bash
-pip install -r requirements-wsl.txt
+sudo apt update && sudo apt install git-lfs
 ```
-
-3. Run the ML-Env verification scripts described in `CUDA-ML-ENV-SETUP.md` (for example `test_pytorch.py` and `test_tensorflow.py`) before installing the rest of the repository dependencies.
 
 ### One-time activities
 
@@ -50,14 +66,17 @@ see [tasks\done\02-install-nvidia-cuda-drivers.md](tasks\done\02-install-nvidia-
 see [tasks\done\03-clone-ml-env-cuda13.md](tasks\done\03-clone-ml-env-cuda13.md)
 see [tasks\done\04-run-ml-env-setup.md](tasks\done\04-run-ml-env-setup.md)
 ```bash
-bash ../ML-Env-CUDA13/setup_ml_env_wsl.sh
+sudo python3 forge/OPERATION_PHOENIX_FORGE/scripts/setup_cuda_env.py --staged --recreate
 ```
 
 ### restarting sessions enabling your environment
 ```bash
 source ~/ml_env/bin/activate
-python ../ML-Env-CUDA13/test_pytorch.py
-python ../ML-Env-CUDA13/test_tensorflow.py
+python forge/OPERATION_PHOENIX_FORGE/scripts/test_torch_cuda.py
+python forge/OPERATION_PHOENIX_FORGE/scripts/test_xformers.py
+python forge/OPERATION_PHOENIX_FORGE/scripts/test_tensorflow.py
+python forge/OPERATION_PHOENIX_FORGE/scripts/test_pytorch.py
+python forge/OPERATION_PHOENIX_FORGE/scripts/test_llama_cpp.py
 ```
 
 ---
@@ -103,6 +122,78 @@ sequenceDiagram
     Note over Deploy: Create Modelfile<br/>Run pre-commit scans
     
     Deploy-->>User: ✅ Fine-tuned model ready!
+```
+
+## Workflow Overview
+
+```mermaid
+graph TD
+    subgraph "Phase 1: Environment & Data"
+        A["<i class='fa fa-cogs'></i> setup_cuda_env.py<br/>*Creates Python environment*<br/>&nbsp;"]
+        B["<i class='fa fa-pen-ruler'></i> Manual Data Assembly<br/>*Creates training JSONL*<br/>&nbsp;"]
+        A_out(" <i class='fa fa-folder-open'></i> ml_env venv")
+        B_out(" <i class='fa fa-file-alt'></i> smart-secrets-scanner-train.jsonl")
+    end
+
+    subgraph "Phase 2: Model Forging"
+        C0["<i class='fa fa-download'></i> download_model.sh<br/>*Downloads base model*<br/>&nbsp;"]
+        C["<i class='fa fa-microchip'></i> fine_tune.py<br/>*Performs QLoRA fine-tuning*<br/>&nbsp;"]
+        C0_out(" <i class='fa fa-cube'></i> Base Model")
+        C_out(" <i class='fa fa-puzzle-piece'></i> LoRA Adapter")
+    end
+
+    subgraph "Phase 3: Packaging & Publishing (Planned)"
+        D1["<i class='fa fa-compress-arrows-alt'></i> merge_adapter.py<br/>*Merges base + adapter*<br/>&nbsp;"]
+        D2["<i class='fa fa-compress-arrows-alt'></i> convert_to_gguf.py<br/>*Converts to GGUF*<br/>&nbsp;"]
+        E["<i class='fa fa-upload'></i> upload_to_huggingface.py<br/>*Publishes model to Hub*<br/>&nbsp;"]
+        D1_out(" <i class='fa fa-puzzle-piece'></i> Merged Model")
+        D2_out(" <i class='fa fa-cube'></i> GGUF Model")
+        E_out(" <i class='fa fa-cloud'></i> Hugging Face Hub")
+    end
+
+    subgraph "Phase 4: Local Deployment (Planned)"
+        F["<i class='fa fa-file-code'></i> create_modelfile.py<br/>*Prepares model for Ollama*<br/>&nbsp;"]
+        F_out(" <i class='fa fa-terminal'></i> Ollama Modelfile")
+    end
+    
+    subgraph "Phase 5: E2E Verification "
+        H["<i class='fa fa-power-off'></i> python scripts/evaluate.py<br/>*Runs evaluation tests*<br/>&nbsp;"]
+        I["<i class='fa fa-bolt'></i> Evaluate JSONL<br/>*Tests with evaluation data*<br/>*Calculates metrics*"]
+        J["<i class='fa fa-brain'></i> Test Raw Files<br/>*Tests with source files*<br/>*Checks detections*"]
+        I_out(" <i class='fa fa-file-invoice'></i> Evaluation Results")
+        J_out(" <i class='fa fa-file-signature'></i> Inference Outputs")
+        K_out(" <i class='fa fa-check-circle'></i> Verified Model")
+    end
+
+    A -- Creates --> A_out;
+    A_out --> B;
+    B -- Creates --> B_out;
+    B_out --> C0;
+    C0 -- Downloads --> C0_out;
+    C0_out --> C;
+    C -- Creates --> C_out;
+    C_out --> D1;
+    D1 -- Creates --> D1_out;
+    D1_out --> D2;
+    D2 -- Creates --> D2_out;
+    D2_out --> E;
+    E -- Pushes to --> E_out;
+    E_out -- Pulled for --> F;
+    F -- Creates --> F_out;
+    F_out -- Enables --> H;
+    H -- Executes --> I;
+    H -- Executes --> J;
+    I -- Yields --> I_out;
+    J -- Yields --> J_out;
+    I_out & J_out --> K_out;
+
+    classDef script fill:#e8f5e8,stroke:#333,stroke-width:2px;
+    classDef artifact fill:#e1f5fe,stroke:#333,stroke-width:1px,stroke-dasharray: 5 5;
+    classDef planned fill:#fff3e0,stroke:#888,stroke-width:1px,stroke-dasharray: 3 3;
+
+    class A,B,C0,C,D1,D2,E,F,H,I,J script;
+    class A_out,B_out,C0_out,C_out,D1_out,D2_out,E_out,F_out,I_out,J_out,K_out artifact;
+    class D1,D2,E,F,H,I,J,D1_out,D2_out,E_out,F_out,I_out,J_out,K_out planned;
 ```
 
 ### Step-by-Step Process
@@ -352,10 +443,10 @@ Prefer the repository-provided verification scripts rather than generic instruct
 
 WSL / ML-Env verification (ML-Env-CUDA13 sibling repo)
 ```bash
-# from inside WSL and with ML-Env-CUDA13 at the sibling path
+# from inside WSL with the unified environment
 source ~/ml_env/bin/activate
-python ../ML-Env-CUDA13/test_pytorch.py
-python ../ML-Env-CUDA13/test_tensorflow.py
+python scripts/test_pytorch.py
+python scripts/test_tensorflow.py
 ```
 
 If you are installing in WSL, run `pip install -r requirements-wsl.txt` (see `CUDA-ML-ENV-SETUP.md` for the recommended staged install). The top-level `requirements.txt` is intended as a portable list; for CUDA-enabled installs prefer `requirements-wsl.txt`.
@@ -384,7 +475,7 @@ On Windows PowerShell (example):
 ```powershell
 .\cuda_clean_env\Scripts\Activate
 ```
-Prefer using repository wrapper scripts and the provided verification scripts (for example `bash scripts/install_deps.sh`, `python ../ML-Env-CUDA13/test_pytorch.py`) instead of relying on global installs.
+Prefer using repository wrapper scripts and the provided verification scripts (for example `python scripts/test_pytorch.py`) instead of relying on global installs.
 
 ---
 
