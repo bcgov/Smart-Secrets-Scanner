@@ -241,8 +241,8 @@ def print_report(file_path, strict=False):
     print("-" * 60)
     balance = check_class_balance(file_path)
     print(f"Total examples: {balance['total']}")
-    print(f"ALERT examples: {balance['alert']} ({balance['alert_pct']:.1f}%)")
-    print(f"Safe examples:  {balance['safe']} ({balance['safe_pct']:.1f}%)")
+    print(f"ALERT examples: {balance['alert_pct']:.1f}%")
+    print(f"Safe examples:  {balance['safe_pct']:.1f}%")
     
     if balance['balanced']:
         print(f"✅ Dataset is balanced (40-60% split)")
@@ -252,7 +252,8 @@ def print_report(file_path, strict=False):
     if balance['secret_types']:
         print(f"\nSecret types detected:")
         for secret_type, count in balance['secret_types'].most_common():
-            print(f"   - {secret_type}: {count}")
+            pct = (count / balance['alert']) * 100 if balance['alert'] > 0 else 0
+            print(f"   - {secret_type}: {pct:.1f}%")
     print()
     
     # 5. Token Length Estimation
