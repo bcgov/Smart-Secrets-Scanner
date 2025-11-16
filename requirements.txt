@@ -1,5 +1,7 @@
 # Use the PyTorch CUDA 12.6 wheel index for PyTorch packages.
 --extra-index-url https://download.pytorch.org/whl/cu126
+# Add NVIDIA's index to find correct CUDA-enabled binaries.
+--extra-index-url https://pypi.nvidia.com
 
 # --- CORE ML & FINE-TUNING STACK ---
 # Pinned to PyTorch 2.9.0 to match xformers dependency.
@@ -7,11 +9,9 @@ torch==2.9.0+cu126
 torchvision==0.24.0+cu126
 torchaudio==2.9.0+cu126
 
-# Add NVIDIA's index to find correct CUDA-enabled binaries for the packages below.
---extra-index-url https://pypi.nvidia.com
-
 # Pinned to a known-good, compatible set.
-transformers==4.41.2
+# Updated transformers to a patched version to resolve Dependabot alerts.
+transformers==4.42.4
 peft==0.10.0
 trl==0.8.6
 bitsandbytes==0.43.1
