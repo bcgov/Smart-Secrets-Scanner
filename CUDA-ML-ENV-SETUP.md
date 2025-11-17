@@ -71,7 +71,17 @@ If the `.env` file doesn't exist or is missing the token, create/update it with 
 
 This phase builds the project's specific Python environment. It can be re-run at any time to create a clean environment.
 
-### 1. Run the All-in-One Setup Script
+### 0. Clear Environment (Optional)
+
+To ensure a completely clean start, you can manually delete the existing `~/ml_env` virtual environment before running the setup script. The setup script with `--recreate` will do this automatically, but this step gives you explicit control.
+
+```bash
+# Manually delete the existing environment (optional, as --recreate does this)
+deactivate 2>/dev/null || true
+rm -rf ~/ml_env
+```
+
+### 1. Run the All-in-One Setup Scriptt
 
 From your `Smart-Secrets-Scanner` root directory, execute the `setup_cuda_env.py` script.
 Note: Run this with sudo as it automatically installs system packages like python3.11 and git-lfs if they are missing.
@@ -93,11 +103,105 @@ This script creates (`~/ml_env`)  and installs all Python dependencies from requ
 source ~/ml_env/bin/activate
 ```
 
-### 2b. Install other libraries for compatability for CUDA (can't be done in requirments.txt)
-While your (ml_env) is active, run this command:
+### 2b. Install Critical CUDA Binaries (Surgical Strike)
+
+Certain low-level libraries like `bitsandbytes`, `triton`, and `xformers` require a specific installation order to link correctly with a CUDA-enabled PyTorch. A standard pip install can often fail or install a CPU-only version.
+
+This "surgical strike" process ensures these critical binaries are installed correctly after your main environment is set up. Execute these commands one by one from your activated `(ml_env)`.
+
+**Pre-flight Check:** Before you begin, confirm that the correct PyTorch is installed. Run this command:
+
 ```bash
-pip install bitsandbytes==0.43.1 --prefer-binary --extra-index-url=https://pypi.nvidia.com
+python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
 ```
+
+It should return 2.9.0+cu126 (or the CUDA-enabled build you targeted). If it doesn't, re-run the main setup script (setup_cuda_env.py) and re-check.
+
+The Surgical Installation Protocol (ordered & deterministic)
+
+NOTE: run each line/section sequentially and paste the verification outputs if anything errors. This protocol was validated to work with PyTorch 2.9.0+cu126, resulting in triton 3.5.0 and bitsandbytes 0.48.2 with CUDA support.
+
+# A: confirm env basics (do this first)
+```bash
+which python
+python -V
+pip --version
+python -c "import torch; print('torch:', torch.__version__, 'cuda_available:', torch.cuda.is_available())"
+```
+
+# B: clean slate
+```bash
+pip uninstall -y bitsandbytes triton xformers || true
+pip install --upgrade pip setuptools wheel
+```
+
+# C: install Triton 3.1.0 (this will be overridden by xformers to 3.5.0, which is compatible and works)
+```bash
+pip install --force-reinstall "triton==3.1.0"
+```
+
+# Quick verify Triton import
+```bash
+python - <<'PY'
+try:
+    import triton
+    print("triton OK:", triton.__version__)
+except Exception as e:
+    print("triton import failed:", repr(e))
+    raise
+PY
+```
+
+# D: diagnostic — show which bitsandbytes wheels pip can see on the extra indexes
+```bash
+pip index versions bitsandbytes --extra-index-url https://pypi.nvidia.com --extra-index-url https://download.pytorch.org/whl/cu126
+```
+
+# E: install bitsandbytes with CUDA support (use version 0.48.2, which includes CUDA126 native lib)
+```bash
+pip install --force-reinstall --no-cache-dir bitsandbytes==0.48.2 --no-deps \
+  --extra-index-url https://pypi.nvidia.com --extra-index-url https://download.pytorch.org/whl/cu126
+```
+
+# F: install xformers (this will pull triton 3.5.0, which is compatible and provides triton.ops)
+```bash
+pip install xformers
+```
+
+# G: known fsspec/datasets compatibility mitigation (optional)
+```bash
+pip install "fsspec<=2024.3.1"
+```
+
+# H: verification snippet — verifies triton and bitsandbytes plus native libs
+```bash
+python - <<'PY'
+import importlib, pathlib
+def try_import(name):
+    try:
+        m = importlib.import_module(name)
+        print(f"{name} imported, ver:", getattr(m,'__version__', None), "file:", getattr(m,'__file__', None))
+    except Exception as e:
+        print(f"{name} import failed:", repr(e))
+
+try_import('triton')
+try_import('bitsandbytes')
+
+# list any native libbitsandbytes files next to the package
+try:
+    import bitsandbytes as bnb
+    p = pathlib.Path(bnb.__file__).parent
+    found = False
+    for f in p.glob("libbitsandbytes*"):
+        print("native lib:", f)
+        found = True
+    if not found:
+        print("no libbitsandbytes native libs found (likely CPU-only install)")
+except Exception as e:
+    print("bitsandbytes inspect failed:", repr(e))
+PY
+```
+
 
 ### 3. Build the `llama-cpp-python` "Bridge"
 The `llama-cpp-python` package is the Python "bridge" that allows your Python code (like inference.py) to communicate with the GGUF model. We must ensure this bridge is also built with CUDA support.
