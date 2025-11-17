@@ -67,7 +67,7 @@ def get_torch_dtype(kind: str):
         return torch.bfloat16
     raise ValueError(f"Unsupported dtype '{kind}' for bitsandbytes compute dtype")
 
-def ensure_train_val_files(train_file_path, val_file_path=None):
+def ensure_train_val_files(train_file_path, val_file_path=None, split_ratio=0.1):
     """Ensure train and validation files exist, create validation split if needed."""
     if val_file_path is None or not val_file_path:
         logger.info("No val_file provided; skipping split.")
@@ -78,13 +78,13 @@ def ensure_train_val_files(train_file_path, val_file_path=None):
         return train_file_path, val_file_path
 
     # Only split if val_file_path is explicitly requested but missing
-    logger.info("Validation file not found. Creating split (train/val = 90/10)")
+    logger.info("Validation file not found. Creating split (train/val = %.0f/%.0f)", (1-split_ratio)*100, split_ratio*100)
     with open(train_file_path, 'r', encoding='utf-8') as f:
         lines = [line for line in f if line.strip()]
     import random
     random.seed(42)
     random.shuffle(lines)
-    split_idx = int(0.9 * len(lines))
+    split_idx = int((1 - split_ratio) * len(lines))
     new_train = train_file_path.with_suffix('.train.jsonl')
     new_val = val_file_path
     # write out new files (don't overwrite original train file)
@@ -246,6 +246,14 @@ def main():
     logger.info("🚀 Smart Secrets Scanner - Fine-Tuning Script (Optimized v2.0)")
     logger.info("=" * 70)
     logger.info(f"⏰ Start time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+
+    # Diagnostics
+    logger.info("🔍 System Diagnostics:")
+    logger.info("   CUDA available: %s; GPU count: %d", torch.cuda.is_available(), torch.cuda.device_count())
+    if torch.cuda.is_available():
+        for i in range(torch.cuda.device_count()):
+            logger.info("   CUDA device %d: %s (total mem: %s MB)", i, torch.cuda.get_device_name(i), torch.cuda.get_device_properties(i).total_memory // 1024**2)
+    logger.info("   CPU cores (logical): %d, %d%% used", psutil.cpu_count(logical=True), psutil.cpu_percent(interval=0.5))
     logger.info("")
 
     # System diagnostics
@@ -517,6 +525,9 @@ def main():
     logger.info("     python scripts/convert_to_gguf.py")
     logger.info("  4. Evaluate model:")
     logger.info("     python scripts/evaluate.py")
+
+    # Clean up GPU memory
+    torch.cuda.empty_cache()
 
     return 0
 
