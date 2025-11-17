@@ -109,17 +109,31 @@ def verify_gguf(file_path: Path):
 # --------------------------------------------------------------------------- #
 def check_llama_cpp_tools():
     """Find llama.cpp conversion and quantization tools"""
-    try:
-        convert_script = shutil.which("convert-hf-to-gguf.py")
-        quantize_script = shutil.which("llama-quantize")
-        if not convert_script or not quantize_script:
-            raise FileNotFoundError
-        return convert_script, quantize_script
-    except:
-        log.error("llama.cpp CLI tools not found in PATH.")
-        log.info("Install with: pip install 'llama-cpp-python[cli]'")
-        log.info("Or build from: https://github.com/ggerganov/llama.cpp")
-        return None, None
+    # First try local llama.cpp directory
+    llama_cpp_root = PROJECT_ROOT.parent / "llama.cpp"
+    convert_script = llama_cpp_root / "convert_hf_to_gguf.py"
+    quantize_script = llama_cpp_root / "build" / "bin" / "llama-quantize"
+
+    log.info(f"Looking for convert script: {convert_script}")
+    log.info(f"Looking for quantize script: {quantize_script}")
+
+    if not convert_script.exists() or not quantize_script.exists():
+        log.warning(f"convert_script exists: {convert_script.exists()}")
+        log.warning(f"quantize_script exists: {quantize_script.exists()}")
+        # Fallback to PATH search
+        try:
+            import shutil
+            convert_script = shutil.which("convert-hf-to-gguf.py")
+            quantize_script = shutil.which("llama-quantize")
+            if not convert_script or not quantize_script:
+                raise FileNotFoundError
+        except:
+            log.error("llama.cpp CLI tools not found.")
+            log.info("Install with: pip install 'llama-cpp-python[cli]'")
+            log.info("Or build from: https://github.com/ggerganov/llama.cpp")
+            return None, None
+
+    return convert_script, quantize_script
 
 def convert_to_gguf(model_path: Path, output_path: Path, convert_script: str, model_name: str, use_cuda: bool = True):
     """Convert HuggingFace model to GGUF format (F16)"""
@@ -135,7 +149,9 @@ def convert_to_gguf(model_path: Path, output_path: Path, convert_script: str, mo
         "python", convert_script,
         str(model_path),
         "--outfile", str(output_path),
+        "--outtype", "f16",  # Explicit F16 output type
         "--model-name", model_name,
+        "--verbose",  # Add verbose output
     ]
 
     if use_cuda:
