@@ -203,6 +203,17 @@ PY
 ```
 
 
+### Troubleshooting: Accelerator Version Conflicts
+
+If you encounter `TypeError: Accelerator.unwrap_model() got an unexpected keyword argument 'keep_torch_compile'` during training initialization, update accelerate to ensure compatibility with the installed transformers version:
+
+```bash
+pip install --upgrade accelerate
+```
+
+This resolves version mismatches that can occur after the surgical strike installations.
+
+
 ### 3. Build the `llama-cpp-python` "Bridge"
 The `llama-cpp-python` package is the Python "bridge" that allows your Python code (like inference.py) to communicate with the GGUF model. We must ensure this bridge is also built with CUDA support.
 
