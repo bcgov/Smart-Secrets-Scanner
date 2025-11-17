@@ -1,6 +1,6 @@
 # Execution Guide: Smart Secrets Scanner Fine-Tuning
 
-**Last Updated**: 2025-11-01  
+**Last Updated**: 2025-11-16  
 **Estimated Total Time**: 4-6 hours (depending on GPU)
 
 This guide provides step-by-step instructions to fine-tune Llama 3.1 for secret detection and deploy it to Ollama.
@@ -308,36 +308,81 @@ data:
 
 **Estimated Time**: 1-3 hours (depends on GPU and epochs)
 
-#### Step 9.1: Start Training
+#### Step 9.1: Start Training (Enhanced Script)
 
 ```bash
 # Activate environment
 source ~/ml_env/bin/activate
 
-# Start fine-tuning
+# Start fine-tuning with enhanced monitoring
 python scripts/fine_tune.py
 ```
 
-**What happens**:
-1. Loads base Llama 3.1 8B model with 4-bit quantization
-2. Applies LoRA adapters (only ~0.5% of parameters trained)
-3. Trains for 5 epochs on 56 examples
-4. Saves checkpoints every 50 steps
-5. Validates every 25 steps
-6. Logs to TensorBoard
+**What the enhanced script does**:
+1. **System Diagnostics**: Checks CUDA availability, GPU memory, CPU cores
+2. **Smart Authentication**: Loads Hugging Face token from `.env` file
+3. **Resume Capability**: Automatically detects and resumes from existing checkpoints
+4. **Optimized Loading**: Uses 4-bit quantization with improved dtype handling
+5. **Professional Logging**: Structured logging with timestamps and progress tracking
+6. **Data Validation**: Auto-creates validation split if missing (90/10)
+7. **Performance Monitoring**: Tracks training metrics and GPU utilization
+8. **Error Recovery**: Comprehensive error handling with actionable messages
 
-**Expected Output** (per epoch):
+**Expected Enhanced Output**:
 ```
-Epoch 1/5
-Step 10/70: loss=1.234, learning_rate=0.0002
-Step 20/70: loss=0.876, learning_rate=0.0002
-...
-Evaluation: val_loss=0.654
+🚀 Smart Secrets Scanner - Fine-Tuning Script (Optimized v2.0)
+⏰ Start time: 2025-11-16 14:30:00
 
-Epoch 5/5
-Step 350/350: loss=0.123
-Training complete!
-✅ LoRA adapter saved to: models/fine-tuned/smart-secrets-scanner-lora
+🔍 System Diagnostics:
+   CUDA available: True
+   GPU count: 1
+   GPU 0: NVIDIA RTX A2000 (8192 MB)
+   CPU cores: 12 logical, 15.2% used
+
+🔐 Authenticating with Hugging Face...
+✅ Authenticated successfully
+
+📊 Loading and formatting dataset...
+✅ Loaded 56 training examples
+✅ Loaded 16 validation examples
+
+📝 Formatting prompts with Alpaca template...
+✅ Datasets formatted
+
+🔽 Loading base model: models/base/Meta-Llama-3.1-8B
+   Using 4-bit quantization for efficient training
+✅ Model loaded and quantized
+
+🔧 Configuring LoRA adapters...
+📊 Trainable parameters: 0.49% (8,388,608 / 1,709,526,528)
+✅ LoRA configuration applied
+
+⚙️  Configuring training arguments...
+✅ Training configuration:
+   Epochs: 15
+   Batch size: 1 (effective: 8)
+   Learning rate: 0.0002
+   Max sequence length: 256
+   Optimizer: paged_adamw_8bit
+   Scheduler: cosine
+
+🏋️  Starting Training...
+📁 Found checkpoint to resume from: outputs/checkpoints/checkpoint-200
+
+✅ Training Complete!
+⏰ Start time:  2025-11-16 14:30:00
+⏰ End time:    2025-11-16 16:45:00
+⏱️  Total time:  2h 15m 0s
+
+📁 LoRA adapter saved to: models/fine-tuned/smart-secrets-scanner-lora
+📁 Training checkpoints: outputs/checkpoints
+📁 Training logs: outputs/logs
+
+📊 Next steps:
+  1. Review training logs: tensorboard --logdir outputs/logs
+  2. Merge adapter with base model: python scripts/merge_adapter.py
+  3. Convert to GGUF: python scripts/convert_to_gguf.py
+  4. Evaluate model: python scripts/evaluate.py
 ```
 
 #### Step 9.2: Monitor Training (in another terminal)
