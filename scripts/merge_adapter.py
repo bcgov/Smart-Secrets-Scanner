@@ -44,7 +44,14 @@ logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(message)s",
     datefmt="%H:%M:%S",
 )
+# Add file logging to persist logs even if terminal closes
+file_handler = logging.FileHandler('merge_adapter.log')
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s", datefmt="%H:%M:%S"))
+logging.getLogger().addHandler(file_handler)
+
 log = logging.getLogger(__name__)
+log.info("Merge adapter script started - logging to console and merge_adapter.log")
 
 # --------------------------------------------------------------------------- #
 # Paths
@@ -192,7 +199,7 @@ def merge_lora_adapter(base_model_path: Path, adapter_path: Path, output_path: P
         with torch.no_grad():
             merged_model = model.merge_and_unload()
         # Move to CPU to free GPU memory
-        merged_model.to("cpu")
+        merged_model = merged_model.cpu()
         torch.cuda.empty_cache()
     except Exception as e:
         log.exception(f"❌ Merge failed: {e}")
@@ -213,7 +220,7 @@ def merge_lora_adapter(base_model_path: Path, adapter_path: Path, output_path: P
     # --- Atomic Save ---
     tmpdir = Path(tempfile.mkdtemp(prefix="merge_tmp_"))
     try:
-        merged_model.save_pretrained(str(tmpdir), safe_serialization=True, max_shard_size="10GB")
+        merged_model.save_pretrained(str(tmpdir), safe_serialization=True, max_shard_size="5GB")
         tokenizer.save_pretrained(str(tmpdir))
 
         # Save metadata
