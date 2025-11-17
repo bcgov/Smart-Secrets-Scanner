@@ -67,31 +67,30 @@ def get_torch_dtype(kind: str):
         return torch.bfloat16
     raise ValueError(f"Unsupported dtype '{kind}' for bitsandbytes compute dtype")
 
-def ensure_train_val_files(train_path: Path, val_path=None, split_ratio=0.1):
-    """Ensure train and val files exist, splitting if necessary."""
-    if val_path is None or not val_path:
+def ensure_train_val_files(train_file_path, val_file_path=None):
+    """Ensure train and validation files exist, create validation split if needed."""
+    if val_file_path is None or not val_file_path:
         logger.info("No val_file provided; skipping split.")
-        return train_path, None
+        return train_file_path, None
 
-    if val_path.exists():
-        logger.info("Found existing val_file: %s", val_path)
-        return train_path, val_path
+    if val_file_path.exists():
+        logger.info("Found existing val_file: %s", val_file_path)
+        return train_file_path, val_file_path
 
-    # Only split if val_path is explicitly requested but missing
-    logger.info("Validation file not found. Creating split (train/val = %.0f/%.0f)", (1-split_ratio)*100, split_ratio*100)
-    import json
-    with open(train_path, 'r') as f:
-        lines = f.readlines()
+    # Only split if val_file_path is explicitly requested but missing
+    logger.info("Validation file not found. Creating split (train/val = 90/10)")
+    with open(train_file_path, 'r', encoding='utf-8') as f:
+        lines = [line for line in f if line.strip()]
     import random
     random.seed(42)
     random.shuffle(lines)
-    split_idx = int((1 - split_ratio) * len(lines))
-    new_train = train_path.with_suffix('.train.jsonl')
-    new_val = val_path
+    split_idx = int(0.9 * len(lines))
+    new_train = train_file_path.with_suffix('.train.jsonl')
+    new_val = val_file_path
     # write out new files (don't overwrite original train file)
-    with open(new_train, 'w') as f:
+    with open(new_train, 'w', encoding='utf-8') as f:
         f.writelines(lines[:split_idx])
-    with open(new_val, 'w') as f:
+    with open(new_val, 'w', encoding='utf-8') as f:
         f.writelines(lines[split_idx:])
     logger.info("Split complete. Train: %d examples, Val: %d examples.", split_idx, len(lines) - split_idx)
     return new_train, new_val
@@ -221,38 +220,6 @@ def setup_lora(model, config):
     model.print_trainable_parameters()
     
     return model
-
-def ensure_train_val_files(train_file_path, val_file_path=None):
-    """Ensure train and validation files exist, create validation split if needed."""
-    if val_file_path and val_file_path.exists():
-        return train_file_path, val_file_path
-
-    # If no validation file specified or doesn't exist, create a split
-    logger.info("📊 Creating validation split from training data...")
-
-    # Load training data
-    with open(train_file_path, 'r', encoding='utf-8') as f:
-        data = [json.loads(line) for line in f if line.strip()]
-
-    # Split 90/10
-    train_size = int(0.9 * len(data))
-    train_data = data[:train_size]
-    val_data = data[train_size:]
-
-    # Save validation file
-    val_file_path = train_file_path.parent / f"{train_file_path.stem}_val{train_file_path.suffix}"
-    with open(val_file_path, 'w', encoding='utf-8') as f:
-        for item in val_data:
-            f.write(json.dumps(item, ensure_ascii=False) + '\n')
-
-    # Overwrite train file with split
-    with open(train_file_path, 'w', encoding='utf-8') as f:
-        for item in train_data:
-            f.write(json.dumps(item, ensure_ascii=False) + '\n')
-
-    logger.info("✅ Created validation split: %d train, %d val examples", len(train_data), len(val_data))
-    return train_file_path, val_file_path
-
 
 def get_torch_dtype(dtype_str):
     """Convert string dtype to torch dtype."""
@@ -504,7 +471,17 @@ def main():
     logger.info("Monitor training with: tensorboard --logdir %s", logging_dir)
     logger.info("")
 
-    trainer.train(resume_from_checkpoint=last_checkpoint)
+    try:
+        trainer.train(resume_from_checkpoint=last_checkpoint)
+    except Exception as e:
+        logger.exception("Training failed with exception: %s", e)
+        # Try to save whatever we have
+        try:
+            logger.info("Attempting best-effort save of current adapter to: %s", adapter_path)
+            trainer.model.save_pretrained(str(adapter_path))
+        except Exception as e2:
+            logger.exception("Failed to save adapter: %s", e2)
+        raise  # re-raise so caller knows training failed
 
     # Save final model
     logger.info("")
@@ -513,45 +490,6 @@ def main():
     trainer.model.save_pretrained(str(adapter_path))
     tokenizer.save_pretrained(str(adapter_path))
 
-    # Record end time and calculate duration
-    end_time = datetime.now()
-    duration = end_time - start_time
-    hours, remainder = divmod(duration.total_seconds(), 3600)
-    minutes, seconds = divmod(remainder, 60)
-
-    logger.info("")
-    logger.info("=" * 70)
-    logger.info("✅ Training Complete!")
-    logger.info("=" * 70)
-    logger.info("⏰ Start time:  %s", start_time.strftime('%Y-%m-%d %H:%M:%S'))
-    logger.info("⏰ End time:    %s", end_time.strftime('%Y-%m-%d %H:%M:%S'))
-    logger.info("⏱️  Total time:  %dh %dm %ds", int(hours), int(minutes), int(seconds))
-    logger.info("")
-    logger.info("📁 LoRA adapter saved to: %s", adapter_path)
-    logger.info("📁 Training checkpoints: %s", output_dir)
-    logger.info("📁 Training logs: %s", logging_dir)
-    logger.info("")
-    logger.info("📊 Next steps:")
-    logger.info("  1. Review training logs:")
-    logger.info("     tensorboard --logdir %s", logging_dir)
-    logger.info("  2. Merge adapter with base model:")
-    logger.info("     python scripts/merge_adapter.py")
-    logger.info("  3. Convert to GGUF:")
-    logger.info("     python scripts/convert_to_gguf.py")
-    logger.info("  4. Evaluate model:")
-    logger.info("     python scripts/evaluate.py")
-
-    return 0
-    
-    trainer.train()
-    
-    # Save final model
-    print("\n" + "=" * 70)
-    print("💾 Saving final LoRA adapter...")
-    output_path = config['output']['adapter_path']
-    trainer.model.save_pretrained(output_path)
-    tokenizer.save_pretrained(output_path)
-    
     # Record end time and calculate duration
     end_time = datetime.now()
     duration = end_time - start_time

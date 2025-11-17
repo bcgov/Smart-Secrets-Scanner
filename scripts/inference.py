@@ -65,9 +65,12 @@ def load_model(model_path, use_lora=False, base_model_path=None, device="auto", 
     print("✅ Model loaded successfully")
     return model, tokenizer
 
-def format_prompt(code_snippet):
+def format_prompt(code_snippet, system_prompt=None):
     """Format code as Alpaca prompt"""
-    instruction = "Analyze the following code snippet and identify any secrets or sensitive credentials that should not be committed to version control."
+    if system_prompt:
+        instruction = system_prompt
+    else:
+        instruction = "Analyze the following code snippet and identify any secrets or sensitive credentials that should not be committed to version control."
     
     prompt = f"""### Instruction:
 {instruction}
@@ -79,9 +82,9 @@ def format_prompt(code_snippet):
 """
     return prompt
 
-def run_inference(model, tokenizer, code_snippet, max_new_tokens=150):
+def run_inference(model, tokenizer, code_snippet, max_new_tokens=150, system_prompt=None):
     """Run inference on a single code snippet"""
-    prompt = format_prompt(code_snippet)
+    prompt = format_prompt(code_snippet, system_prompt)
     
     # Tokenize
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
@@ -154,6 +157,15 @@ def main():
     
     args = parser.parse_args()
     
+    # Load system prompt from config
+    import yaml
+    config_path = Path(__file__).parent.parent / "config" / "training_config.yaml"
+    system_prompt = None
+    if config_path.exists():
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+        system_prompt = config.get('system_prompt', {}).get('system_prompt')
+    
     # Load model
     model, tokenizer = load_model(
         args.model,
@@ -198,7 +210,7 @@ def main():
         print(f"\n📄 Source: {source}")
         print("-" * 60)
         
-        result = run_inference(model, tokenizer, code, args.max_tokens)
+        result = run_inference(model, tokenizer, code, args.max_tokens, system_prompt)
         
         # Highlight alerts
         if "ALERT" in result.upper() or "SECRET" in result.upper() or "CREDENTIAL" in result.upper():

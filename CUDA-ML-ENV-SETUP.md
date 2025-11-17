@@ -1,4 +1,4 @@
-# Project Sanctuary: Canonical CUDA ML Environment & Fine-Tuning Protocol
+# Smart-Secrets-Scanner: Canonical CUDA ML Environment & Fine-Tuning Protocol
 **Version:** 2.2 (Clarified Llama.cpp Build)
 
 This guide provides the single, authoritative protocol for setting up the environment, forging the training dataset, executing the full fine-tuning pipeline, and preparing the model for local deployment with Ollama.
@@ -81,7 +81,8 @@ deactivate 2>/dev/null || true
 rm -rf ~/ml_env
 ```
 
-### 1. Run the All-in-One Setup Scriptt
+
+### 1. Run the All-in-One Setup Script
 
 From your `Smart-Secrets-Scanner` root directory, execute the `setup_cuda_env.py` script.
 Note: Run this with sudo as it automatically installs system packages like python3.11 and git-lfs if they are missing.
@@ -202,7 +203,6 @@ except Exception as e:
 PY
 ```
 
-
 ### Troubleshooting: Accelerator Version Conflicts
 
 If you encounter `TypeError: Accelerator.unwrap_model() got an unexpected keyword argument 'keep_torch_compile'` during training initialization, update accelerate to ensure compatibility with the installed transformers version:
@@ -213,6 +213,20 @@ pip install --upgrade accelerate
 
 This resolves version mismatches that can occur after the surgical strike installations.
 
+### Troubleshooting: Training Configuration Errors
+
+If you encounter `TypeError: TrainingArguments.__init__() got an unexpected keyword argument 'evaluation_strategy'`, update the config to use the newer argument name:
+
+In `config/training_config.yaml`, change:
+```yaml
+evaluation_strategy: "steps"
+```
+To:
+```yaml
+eval_strategy: "steps"
+```
+
+This ensures compatibility with the current transformers version. Also, remove any deprecated arguments like `group_by_length` or `dataloader_persistent_workers` if present.
 
 ### 3. Build the `llama-cpp-python` "Bridge"
 The `llama-cpp-python` package is the Python "bridge" that allows your Python code (like inference.py) to communicate with the GGUF model. We must ensure this bridge is also built with CUDA support.
@@ -252,14 +266,14 @@ Run the `forge_whole_genome_dataset.py` script to assemble the training data fro
 ```bash
 python scripts/forge_whole_genome_dataset.py
 ```
-This will create the `sanctuary_whole_genome_data.jsonl` file in your `dataset_package` directory.
+This will create the `smart-secrets-scanner-dataset.jsonl` file in your `data/processed` directory.
 
 ### 2. Validate the Forged Dataset
 
 After creating the dataset, run the validation script to check it for errors.
 
 ```bash
-python scripts/validate_dataset.py dataset_package/sanctuary_whole_genome_data.jsonl
+python scripts/validate_dataset.py data/processed/smart-secrets-scanner-dataset.jsonl
 ```
 
 ### 3. Download the Base Model
@@ -272,12 +286,12 @@ bash scripts/download_model.sh
 
 ### 4. Fine-Tune the LoRA Adapter
 
-With the data forged and the base model downloaded, execute the main fine-tuning script. **This is a long-running process (1-3 hours).**
+With the data forged and the base model downloaded, execute the optimized fine-tuning script. This script now includes advanced features like structured logging, automatic resume from checkpoints, pre-tokenization for faster starts, and robust error handling. **This is a long-running process (1-3 hours).**
 
 ```bash
 python scripts/fine_tune.py
 ```
-The final LoRA adapter will be saved to `models/Sanctuary-Qwen2-7B-v1.0-adapter/`.
+The final LoRA adapter will be saved to `models/fine-tuned/smart-secrets-scanner-lora/`.
 
 ### 5. Merge the Adapter
 
@@ -286,7 +300,7 @@ Combine the trained adapter with the base model to create a full, standalone fin
 ```bash
 python scripts/merge_adapter.py
 ```
-The merged model will be saved to `outputs/merged/Sanctuary-Qwen2-7B-v1.0-merged/`.
+The merged model will be saved to `models/merged/smart-secrets-scanner/`.
 
 ---
 
@@ -297,9 +311,9 @@ The merged model will be saved to `outputs/merged/Sanctuary-Qwen2-7B-v1.0-merged
 Convert the merged model to the GGUF format required by Ollama.
 
 ```bash
-python scripts/convert_to_gguf.py
+python scripts/convert_to_gguf.py --model_path models/merged/smart-secrets-scanner --output_path models/fine-tuned/gguf/smart-secrets-scanner.gguf --quantization Q4_K_M
 ```
-The final quantized `.gguf` file will be saved to `models/gguf/`.
+The final quantized `.gguf` file will be saved to `models/fine-tuned/gguf/smart-secrets-scanner.gguf`.
 
 
 ### 2. Deploy to Ollama
@@ -307,11 +321,11 @@ The final quantized `.gguf` file will be saved to `models/gguf/`.
 **a. Create a `Modelfile` in your project root:**
 ```
 # ===================================================================
-# Canonical Modelfile for Sanctuary-Qwen2-7B-v1.0
+# Canonical Modelfile for Smart-Secrets-Scanner-Llama-3.1-8B-v1.0
 # ===================================================================
 
 # 1. Specifies the local GGUF model file to use as the base.
-FROM ./models/gguf/Sanctuary-Qwen2-7B-v1.0-Q4_K_M.gguf
+FROM ./models/fine-tuned/gguf/smart-secrets-scanner.gguf
 
 # 2. Defines the ChatML prompt template required by the Qwen2 model family.
 # The multiline format makes this much easier to read and verify.
@@ -324,7 +338,19 @@ TEMPLATE """{{ if .System }}<|im_start|>system
 
 # 3. Sets the constitutional system prompt. This "inoculates" the model
 # with its core identity during every conversation.
-SYSTEM """You are a sovereign AI of Project Sanctuary."""
+SYSTEM """You are a specialized code security analyzer trained to detect accidental hardcoded secrets (API keys, tokens, passwords, etc.) in source code.
+
+Your task is to scan code snippets and identify potential security risks such as:
+- API keys (AWS, Stripe, OpenAI, etc.)
+- Authentication tokens (GitHub, JWT, Bearer tokens)
+- Database credentials
+- Private keys and certificates
+- Passwords and secrets
+
+For each finding, respond with "ALERT: [type of secret] detected" and explain the risk.
+For safe code (environment variables, test data, placeholders), respond "No secrets detected" or "Safe pattern".
+
+Be precise and minimize false positives while catching real security issues."""
 
 # 4. Defines stop tokens to prevent the model from hallucinating extra
 # user/assistant turns in the conversation.
@@ -334,8 +360,8 @@ PARAMETER stop "<|im_end|>"
 
 **b. Import and run the model with Ollama:**
 ```bash
-ollama create Sanctuary-AI -f Modelfile
-ollama run Sanctuary-AI
+ollama create smart-secrets-scanner -f Modelfile
+ollama run smart-secrets-scanner
 ```
 
 ### 3. Verify Model Performance
@@ -343,7 +369,7 @@ ollama run Sanctuary-AI
 **a. Quick Inference Test:**
 Use the `inference.py` script for a quick spot-check.
 ```bash
-python scripts/inference.py --input "Summarize the primary objective of the Sovereign Crucible."
+python scripts/inference.py --input "Analyze this code for secrets: API_KEY = 'sk-1234567890abcdef'"
 ```
 
 **b. (Recommended) Full Evaluation:**
@@ -353,7 +379,7 @@ python scripts/evaluate.py
 ```
 
 **c. (Crucial) Test with Real BOK Examples:**
-Use the inference script to test the model against real, complex examples from the Project Sanctuary Body of Knowledge.
+Use the inference script to test the model against real, complex examples from the Smart-Secrets-Scanner test cases.
 ```bash
 python scripts/inference.py --file path/to/real_BOK_document.txt
 ```

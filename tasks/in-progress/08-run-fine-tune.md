@@ -35,9 +35,11 @@ python scripts/fine_tune.py
 - **Total**: 1000 examples (500 ALERT + 500 SAFE)
 - **Method**: LoRA with 4-bit quantization (QLoRA)
 - **Epochs**: 15
-- **Batch size**: 4 (effective 16 with gradient accumulation)
+- **Batch size**: 1 (effective 8 with gradient accumulation)
 - **Learning rate**: 2e-4
-- **Precision**: BF16
+- **Precision**: FP16 (optimized for A2000)
+- **Sequence Length**: 256 (optimized for 3-4x speedup)
+- **Optimizations**: Gradient checkpointing, optimized dataloader, narrowed LoRA targets
 
 ### Previous Iterations (from Task 46)
 
