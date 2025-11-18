@@ -116,11 +116,10 @@ def check_llama_cpp_tools():
 
     log.info(f"Looking for convert script: {convert_script}")
     log.info(f"Looking for quantize script: {quantize_script}")
-
+    
     if not convert_script.exists() or not quantize_script.exists():
-        log.warning(f"convert_script exists: {convert_script.exists()}")
-        log.warning(f"quantize_script exists: {quantize_script.exists()}")
-        # Fallback to PATH search
+        log.error(f"convert_script exists: {convert_script.exists()}")
+        log.error(f"quantize_script exists: {quantize_script.exists()}")
         try:
             import shutil
             convert_script = shutil.which("convert-hf-to-gguf.py")
@@ -202,102 +201,108 @@ def quantize_gguf(input_gguf: Path, output_gguf: Path, quant_type: str, quantize
         return False
 
 def main():
-    """Main function for GGUF conversion and quantization"""
     parser = argparse.ArgumentParser(description="Convert merged HF model to GGUF + quantize")
-    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH,
-                       help="Path to GGUF config YAML")
-    parser.add_argument("--merged", type=str,
-                       help="Override merged model directory")
-    parser.add_argument("--output-dir", type=str,
-                       help="Override GGUF output directory")
-    parser.add_argument("--quantize", nargs='+',
-                       help="Quantization types to create")
-    parser.add_argument("--force", action="store_true",
-                       help="Overwrite existing files")
-    parser.add_argument("--no-cuda", action="store_true",
-                       help="Disable CUDA (CPU only)")
-    parser.add_argument("--no-verify", action="store_true",
-                       help="Skip GGUF verification")
+    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
+    parser.add_argument("--merged", type=str, help="Override merged model dir")
+    parser.add_argument("--output-dir", type=str, help="Override GGUF output dir")
+    parser.add_argument("--quant", type=str, default="Q4_K_M", help="Quantization type")
+    parser.add_argument("--force", action="store_true", help="Overwrite existing files")
+    parser.add_argument("--no-cuda", action="store_true", help="Disable CUDA (CPU only)")
     args = parser.parse_args()
 
-    # Load configuration
     cfg = load_config(args.config)
 
-    # Resolve paths
     merged_dir = PROJECT_ROOT / (args.merged or cfg["model"]["merged_path"])
     output_dir = PROJECT_ROOT / (args.output_dir or cfg["model"]["gguf_output_dir"])
-    model_name = cfg["model"]["gguf_model_name"]
+    quant_type = args.quant
+    model_name = cfg["model"].get("gguf_model_name", "smart-secrets-scanner")
 
-    # Get quantization types
-    quant_types = args.quantize or cfg["quantization"]["default_types"]
-    use_cuda = not args.no_cuda and cfg["quantization"].get("use_cuda", True)
-
-    # Define output paths
     f16_gguf = output_dir / f"{model_name}.gguf"
-    final_ggufs = [output_dir / f"{model_name}-{quant_type}.gguf" for quant_type in quant_types]
+    final_gguf = output_dir / f"{model_name}-{quant_type}.gguf"
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
     log.info("=== GGUF Conversion & Quantization ===")
     log.info(f"Merged model: {merged_dir}")
     log.info(f"Output dir: {output_dir}")
-    log.info(f"Model name: {model_name}")
-    log.info(f"Quantizations: {', '.join(quant_types)}")
-    log.info(f"CUDA: {'enabled' if use_cuda else 'disabled'}")
+    log.info(f"Quantization: {quant_type}")
 
     # --- Validation ---
     if not merged_dir.exists():
         log.error(f"Merged model not found: {merged_dir}")
         log.info("Run merge_adapter.py first.")
-        return 1
+        sys.exit(1)
 
-    # --- Check for existing files ---
-    existing_files = [f for f in [f16_gguf] + final_ggufs if f.exists()]
-    if existing_files and not args.force:
-        log.error("Existing files found:")
-        for f in existing_files:
-            log.error(f"  - {f}")
-        log.info("Use --force to overwrite.")
-        return 1
+    # --- Check overwrite ---
+    for f in [f16_gguf, final_gguf]:
+        if f.exists() and not args.force:
+            log.error(f"File exists: {f}")
+            log.info("Use --force to overwrite.")
+            sys.exit(1)
 
     # --- Find llama.cpp tools ---
-    convert_script, quantize_script = check_llama_cpp_tools()
-    if not convert_script or not quantize_script:
-        return 1
+    llama_cpp_root = PROJECT_ROOT.parent / "llama.cpp"
+    convert_script = llama_cpp_root / "convert_hf_to_gguf.py"
+    quantize_script = llama_cpp_root / "build" / "bin" / "llama-quantize"
+
+    log.info(f"Looking for convert script: {convert_script}")
+    log.info(f"Looking for quantize script: {quantize_script}")
+    
+    if not convert_script.exists() or not quantize_script.exists():
+        log.error(f"convert_script exists: {convert_script.exists()}")
+        log.error(f"quantize_script exists: {quantize_script.exists()}")
+        try:
+            import shutil
+            convert_script = shutil.which("convert-hf-to-gguf.py")
+            quantize_script = shutil.which("llama-quantize")
+            if not convert_script or not quantize_script:
+                raise FileNotFoundError
+        except:
+            log.error("llama.cpp CLI tools not found.")
+            log.info("Install with: pip install 'llama-cpp-python[cli]'")
+            log.info("Or build from: https://github.com/ggerganov/llama.cpp")
+            sys.exit(1)
+
+    cuda_flag = [] if args.no_cuda else ["--use-cuda"]
 
     # --- Step 1: Convert HF → GGUF (f16) ---
-    if not convert_to_gguf(merged_dir, f16_gguf, convert_script, model_name, use_cuda):
-        return 1
+    cmd1 = [
+        "python", str(convert_script),
+        str(merged_dir),
+        "--outfile", str(f16_gguf),
+        "--outtype", "f16",
+        "--model-name", model_name,
+        "--verbose",
+    ]
+
+    run_command(cmd1, "[1/3] HF → GGUF (f16)")
 
     # --- Step 2: Quantize ---
-    success_count = 0
-    for quant_type in quant_types:
-        final_gguf = output_dir / f"{model_name}-{quant_type}.gguf"
-        if quantize_gguf(f16_gguf, final_gguf, quant_type, quantize_script):
-            success_count += 1
-        else:
-            log.warning(f"Failed to create {quant_type} quantization")
+    cmd2 = [
+        str(quantize_script),
+        str(f16_gguf),
+        str(final_gguf),
+        quant_type,
+    ]
+    run_command(cmd2, f"[2/3] Quantize → {quant_type}")
 
     # --- Step 3: Verify ---
-    if not args.no_verify:
-        log.info("[3/3] Verifying final GGUF files...")
-        for quant_type in quant_types:
-            final_gguf = output_dir / f"{model_name}-{quant_type}.gguf"
-            if final_gguf.exists():
-                verify_gguf(final_gguf)
+    log.info("[3/3] Verifying final GGUF...")
+    if verify_gguf(final_gguf):
+        log.info(f"FINAL GGUF READY: {final_gguf}")
+    else:
+        log.warning("Verification failed – file may be corrupt.")
 
     # --- Cleanup intermediate ---
     if f16_gguf.exists():
         f16_gguf.unlink()
-        log.info(f"🧹 Cleaned up intermediate: {f16_gguf}")
+        log.info(f"Cleaned up intermediate: {f16_gguf}")
+
+    log.info("Next steps:")
+    log.info("1. Create Modelfile:")
+    gguf_relative_path = f"./{cfg['model']['gguf_output_dir']}/{model_name}-{quant_type}.gguf"
+    log.info(f"   FROM {gguf_relative_path}")
+    log.info("2. ollama create smart-secrets-scanner -f Modelfile")
+    log.info("3. ollama run smart-secrets-scanner")
 
     log.info("=== GGUF Conversion Complete ===")
-    log.info(f"✅ Successfully created {success_count}/{len(quant_types)} quantizations")
-    log.info(f"📁 GGUF files saved to: {output_dir}")
-
-    log.info("\n🚀 Next steps:")
-    log.info("  1. Create Modelfile: python scripts/create_modelfile.py")
-    log.info("  2. Test with Ollama: ollama create smart-secrets-scanner -f Modelfile")
-    log.info("  3. Run inference: ollama run smart-secrets-scanner")
-
-    return 0 if success_count > 0 else 1

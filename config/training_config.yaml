@@ -1,48 +1,53 @@
 # ==============================================================================
-# OPTIMIZED TRAINING CONFIGURATION for Smart Secrets Scanner (v2.0)
+# CANONICAL TRAINING CONFIGURATION for Smart Secrets Scanner (v1.0)
 # ==============================================================================
-# This configuration incorporates validated optimizations from multiple LLM models
-# (Gemini, Grok4, ChatGPT) for 3-4x training speedup with minimal quality loss.
+# This file centralizes all parameters for the fine-tuning process, replacing
+# the hardcoded constants in the original 'build_lora_adapter.py' script.
+# It is located within the config directory to keep all
+# fine-tuning assets organized.
 #
-# KEY OPTIMIZATIONS APPLIED:
-# - Reduced max_seq_length from 2048 to 256 (3-4x speedup, O(n²) attention reduction)
-# - Increased gradient_accumulation_steps to 8 for better GPU utilization
-# - Switched to fp16 for A2000 compatibility (from bf16)
-# - Optimized checkpointing (every 200 steps vs 50)
-# - Added dataloader optimizations for faster data loading
-# - Disabled external reporting for cleaner training logs
+# HIGHLIGHTS FROM LLM MODELS (Gemini, Grok4, ChatGPT):
+# - Reducing max_seq_length from 512 to 256 is proven for 3-4x speedup (O(n²) attention reduction).
+# - Community benchmarks show 2-4x faster steps on 8GB GPUs with minimal quality loss.
+# - Trade-offs: Shorter context (sufficient for instruction tuning), lower VRAM (4-6GB vs 7-8GB).
+# - Additional optimizations: Increase grad accumulation to 8, use fp16, save every 200 steps.
+# - Added: Validation/eval, gradient checkpointing, narrower LoRA targets, dataloader opts, seed.
 # ==============================================================================
 
-# --- Model Configuration ---
+# --- Model & Output Configuration ---
 model:
-  base_model_path: "models/base/Meta-Llama-3.1-8B"
-  model_name: "models/base/Meta-Llama-3.1-8B"  # Use local downloaded model
-  cache_dir: "models/base"
+  base_model_name: "Meta-Llama-3.1-8B"   # The Hugging Face model identifier to download.
+  # The final, trained LoRA adapter will be saved here, relative to the project root.
+  final_adapter_path: "models/fine-tuned/smart-secrets-scanner-lora"
 
 # --- Dataset Configuration ---
 data:
+  # Path to your training data file, relative to the project root.
   train_file: "data/processed/smart-secrets-scanner-train-v3.jsonl"
-  val_file: "data/processed/smart-secrets-scanner-val-v3.jsonl"
-  max_seq_length: 256  # OPTIMIZED: Reduced from 2048 for 3-4x speedup on 8GB GPUs
-  dataset_text_field: "text"  # Combined instruction/input/output
+  # It's highly recommended to also have a validation set to monitor for overfitting.
+  val_file: "data/processed/smart-secrets-scanner-val-v3.jsonl" # Placeholder for future use.
 
 # --- Hardware & Performance Configuration ---
-# OPTIMIZED: Use fp16 for better compatibility and performance on A2000
+# Updated: 256 is proven for 3-4x speedup on 8GB GPUs with minimal trade-offs (shorter context, lower VRAM).
+max_seq_length: 256
+# Updated: Use fp16 for better compatibility on A2000 (supports fp16 over bf16).
 use_bf16: false
 torch_dtype: "float16"  # Explicit dtype for HF loader/Trainer consistency
 
-# --- Quantization Configuration (4-bit for efficient training) ---
+# --- Quantization Configuration (for QLoRA) ---
+# These settings enable 4-bit quantization to drastically reduce memory usage.
 quantization:
   load_in_4bit: true
-  bnb_4bit_quant_type: "nf4"          # Use the "nf4" type for higher precision
-  bnb_4bit_compute_dtype: "float16"   # OPTIMIZED: Match fp16 training dtype
-  bnb_4bit_use_double_quant: true     # Saves an additional ~0.4 bits per parameter
+  bnb_4bit_quant_type: "nf4"          # Use the "nf4" type for higher precision.
+  bnb_4bit_compute_dtype: "float16"   # Updated: Match fp16 training dtype.
+  bnb_4bit_use_double_quant: true     # Saves an additional ~0.4 bits per parameter.
 
-# --- LoRA Configuration ---
+# --- LoRA (Low-Rank Adaptation) Configuration ---
+# These settings define the structure of the trainable adapter.
 lora:
   r: 16                                 # LoRA rank. Lower rank saves memory. 16 is a good balance.
   lora_alpha: 32                        # Standard practice is to set alpha = 2 * r.
-  lora_dropout: 0.05                    # Dropout for regularization.
+  lora_dropout: 0.1                     # Dropout for regularization.
   bias: "none"                          # Do not train bias terms.
   task_type: "CAUSAL_LM"                # This is a causal language model.
   # These are the specific layers within the Llama model that we will adapt.
@@ -56,91 +61,29 @@ lora:
     - "down_proj"
 
 # --- Training Arguments Configuration ---
+# These parameters are passed directly to the Hugging Face SFTTrainer.
 training:
   # Directory where intermediate checkpoints will be saved during training.
   output_dir: "outputs/checkpoints/smart-secrets-scanner"
-  num_train_epochs: 15
-  per_device_train_batch_size: 1        # OPTIMIZED: Reduced for stability with longer sequences
-  per_device_eval_batch_size: 1
-  gradient_accumulation_steps: 8        # OPTIMIZED: Increased to 8 for better GPU utilization (effective batch 8)
-
-  # Optimizer
-  optim: "paged_adamw_8bit"             # OPTIMIZED: Memory-efficient optimizer
-  learning_rate: 2.0e-4
-  weight_decay: 0.01
-  max_grad_norm: 0.3                    # OPTIMIZED: Helps prevent exploding gradients
-
-  # Learning Rate Scheduler
-  lr_scheduler_type: "cosine"
-  warmup_ratio: 0.03
-
-  # Logging - OPTIMIZED: Reduced frequency for cleaner output
-  logging_dir: "outputs/logs"
-  logging_steps: 25                      # OPTIMIZED: Log every 25 steps for balance
-  logging_strategy: "steps"
-
-  # Evaluation & Checkpointing - OPTIMIZED: Less frequent for better performance
-  evaluation_strategy: "steps"
-  eval_steps: 200                        # OPTIMIZED: Run evaluation every 200 steps
-  save_strategy: "steps"
-  save_steps: 200                        # OPTIMIZED: Save checkpoint every 200 steps
-  save_total_limit: 3
-
-  # Performance - OPTIMIZED: fp16 for A2000 compatibility
-  fp16: true                             # OPTIMIZED: Enable fp16 for A2000 compatibility
-  bf16: false                            # OPTIMIZED: Disabled in favor of fp16
-  gradient_checkpointing: true           # Reduces peak VRAM at slight speed cost
-
-  # Data Loading Optimizations - OPTIMIZED: Added for faster data loading
-  dataloader_num_workers: 2              # Speed up data loading
-  dataloader_pin_memory: true            # Pin memory for faster GPU transfer
-  dataloader_persistent_workers: true    # Keep workers alive for efficiency
-
-  # Misc
-  seed: 42
-  report_to: "none"                      # OPTIMIZED: Disable external reporting for cleaner logs
-  load_best_model_at_end: true
-  metric_for_best_model: "eval_loss"
-  greater_is_better: false
-  group_by_length: true                  # OPTIMIZED: Groups similar length examples for efficiency
-
-# --- SFT Configuration ---
-sft:
-  max_seq_length: 256                    # OPTIMIZED: Match the reduced sequence length
-  packing: false                         # Set true for better GPU utilization if sequences are short
-  dataset_text_field: "text"
-
-# --- Output Configuration ---
-output:
-  adapter_path: "models/fine-tuned/smart-secrets-scanner-lora"
-  merged_model_path: "models/merged/smart-secrets-scanner"
-  gguf_output_path: "models/gguf"
-
-# --- Alpaca Prompt Template ---
-prompt_template: |
-  Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
-
-  ### Instruction:
-  {instruction}
-
-  ### Input:
-  {input}
-
-  ### Response:
-  {output}
-
-# --- System Prompt for Inference ---
-system_prompt: |
-  You are a specialized code security analyzer trained to detect hardcoded secrets and credentials in source code.
-
-  Your task is to scan code snippets and identify potential security risks such as:
-  - API keys (AWS, Stripe, OpenAI, etc.)
-  - Authentication tokens (GitHub, JWT, Bearer tokens)
-  - Database credentials
-  - Private keys and certificates
-  - Passwords and secrets
-
-  For each finding, respond with "ALERT: [type of secret] detected" and explain the risk.
-  For safe code (environment variables, test data, placeholders), respond "No secrets detected" or "Safe pattern".
-
-  Be precise and minimize false positives while catching real security issues.
+  num_train_epochs: 15                   # The total number of training epochs.
+  per_device_train_batch_size: 1        # Process one example at a time per device.
+  gradient_accumulation_steps: 8        # Updated: Accumulate over 8 steps for better GPU utilization (effective batch 8).
+  optim: "paged_adamw_8bit"             # Memory-efficient optimizer.
+  logging_steps: 25                     # Updated: Log every 25 steps for balance.
+  learning_rate: 2e-4                   # The initial learning rate.
+  max_grad_norm: 0.3                    # Helps prevent exploding gradients.
+  warmup_ratio: 0.03                    # A small portion of training is used to warm up the learning rate.
+  lr_scheduler_type: "cosine"           # The learning rate will decrease following a cosine curve.
+  save_strategy: "steps"                # Updated: Save every N steps for resuming.
+  save_steps: 200                       # Updated: Save checkpoint every 200 steps.
+  save_total_limit: 3                   # Prevents disk bloat by keeping only 3 checkpoints.
+  fp16: true                            # Updated: Enable fp16 for A2000 compatibility.
+  gradient_checkpointing: true          # Reduces peak VRAM at slight speed cost.
+  eval_strategy: "steps"                # Enable evaluation for monitoring.
+  eval_steps: 200                       # Run evaluation every 200 steps.
+  load_best_model_at_end: true          # Load the best model at end.
+  metric_for_best_model: "eval_loss"    # Use loss to select best model.
+  dataloader_num_workers: 2             # Speed up data loading.
+  dataloader_pin_memory: true           # Pin memory for faster GPU transfer.
+  seed: 42                              # For reproducibility.
+  report_to: "none"                     # Disable reporting to external services like W&B for now.

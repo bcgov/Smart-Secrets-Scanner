@@ -1,37 +1,4 @@
-# ==============================================================================
-# MERGE CONFIGURATION for Smart-Secrets-Scanner
-# ==============================================================================
-# Configuration for merging LoRA adapters with base models
-# Optimized for 8GB VRAM GPUs with production-ready settings
-
 model:
-  # Base model name (relative to models/base/)
   base_model_name: "Meta-Llama-3.1-8B"
-
-  # LoRA adapter path (relative to project root)
   adapter_path: "models/fine-tuned/smart-secrets-scanner-lora"
-
-  # Output path for merged model (relative to project root)
-  merged_output_path: "models/merged/smart-secrets-scanner"
-
-merge:
-  # Final dtype for saved model (float16, bfloat16, float32)
-  final_dtype: "float16"
-
-  # Skip sanity inference check after merge
-  skip_sanity_check: false
-
-# Memory and performance settings
-memory:
-  # Use 4-bit quantization for VRAM efficiency
-  use_4bit_quantization: true
-  quant_type: "nf4"
-  compute_dtype: "float16"
-  use_double_quant: true
-
-# Safety and validation
-safety:
-  # Run sanity check after merge
-  run_sanity_check: true
-  # Test prompt for sanity check
-  sanity_prompt: "Analyze this code for secrets: API_KEY = 'test123'"
+  merged_output_path: "outputs/merged/smart-secrets-scanner"
