@@ -19,14 +19,14 @@ pipeline_tag: text-generation
 # 🔒 Smart-Secrets-Scanner — Code Security Analysis Model (GGUF Edition)
 
 **Version:** 1.0 (Public Release)
-**Date:** 2025-11-17
+**Date:** 2025-11-18
 **Developer:** [richfrem](https://huggingface.co/richfrem)
 **Base Model:** [meta-llama/Llama-3.1-8B-Instruct](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct)
 **Training Environment:** Local CUDA environment / PyTorch 2.9.0+cu126
 
 [![HF Model: GGUF](https://img.shields.io/badge/HF-GGUF%20Model-green)](https://huggingface.co/richfrem/smart-secrets-scanner-gguf)
 [![HF Model: LoRA Adapter](https://img.shields.io/badge/HF-LoRA%20Adapter-blue)](https://huggingface.co/richfrem/smart-secrets-scanner-lora)
-[![GitHub](https://img.shields.io/badge/GitHub-Smart--Secrets--Scanner-black?logo=github)](https://github.com/richfrem/Smart-Secrets-Scanner)
+[![GitHub](https://img.shields.io/badge/GitHub-Smart--Secrets--Scanner-black?logo=github)](https://github.com/bcgov/Smart-Secrets-Scanner)
 [![License: CC BY 4.0](https://img.shields.io/badge/license-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 [![Built With: PEFT + llama.cpp](https://img.shields.io/badge/Built With-PEFT %2B llama.cpp-orange)](#)
 
@@ -36,7 +36,7 @@ pipeline_tag: text-generation
 
 **Smart-Secrets-Scanner** is a specialized AI model fine-tuned for detecting accidental hardcoded secrets in source code. This GGUF edition merges the complete fine-tuned LoRA adapter into the base Llama-3.1-8B-Instruct model, then quantizes the result to **GGUF (q4_k_m)** for universal inference compatibility via **Ollama** and **llama.cpp**.
 
-> 🔒 Part of the open-source [Smart-Secrets-Scanner GitHub repository](https://github.com/richfrem/Smart-Secrets-Scanner), providing comprehensive code security analysis tools.
+> 🔒 Part of the open-source [Smart-Secrets-Scanner GitHub repository](https://github.com/bcgov/Smart-Secrets-Scanner), providing comprehensive code security analysis tools.
 
 ---
 
@@ -165,7 +165,7 @@ The Smart-Secrets-Scanner model analyzes code snippets for potential security ri
 ---
 
 Full technical documentation and training notebooks are available in the
-👉 [**Smart-Secrets-Scanner GitHub Repository**](https://github.com/richfrem/Smart-Secrets-Scanner).
+👉 [**Smart-Secrets-Scanner GitHub Repository**](https://github.com/bcgov/Smart-Secrets-Scanner).
 
 
 
