@@ -25,7 +25,7 @@ Expand the training dataset to **1000 examples** that are:
 
 ## Acceptance Criteria
 
-- [ ] Update `scripts/generate_simple_training_data.py` to generate 500 ALERT and 500 SAFE examples
+- [ ] Generate 500 ALERT + 500 SAFE examples using LLM direct creation
 - [ ] SAFE examples must include:
   - [ ] Public API keys (Firebase, Google Maps, Stripe publishable)
   - [ ] Documentation placeholders (`YOUR_API_KEY_HERE`, `<your-token-here>`)
@@ -46,23 +46,37 @@ Expand the training dataset to **1000 examples** that are:
 
 ## Implementation Steps
 
-1. **Update Data Generation Script**
-   - Expand pattern lists for both ALERT and SAFE categories
-   - Ensure edge cases and context-aware examples are included
-   - Support multi-language formats
+1. **LLM-Generated Dataset Expansion**
+   - Use LLM to directly generate additional 1000 examples (500 ALERT + 500 SAFE)
+   - Focus on edge cases and context-aware scenarios that cause false positives
+   - Ensure multi-language coverage and diverse secret patterns
 
-2. **Generate Dataset**
-   ```bash
-   python scripts/generate_simple_training_data.py
+2. **Dataset Generation Prompt**
+   ```
+   Generate 1000 JSONL training examples for secret detection fine-tuning.
+   Create 500 ALERT examples (real secrets that should be detected) and
+   500 SAFE examples (patterns that commonly cause false positives).
+   
+   Include diverse scenarios:
+   - Public API keys, documentation placeholders, API endpoints
+   - Environment variable usage, test data, configuration examples
+   - Hardcoded secrets, obfuscated credentials, secrets in comments
+   - Multi-language support (Python, JavaScript, YAML, Docker, etc.)
    ```
 
-3. **Retrain Model**
+3. **Combine with Existing Dataset**
+   ```bash
+   # Merge new LLM-generated examples with existing dataset
+   # Create data/processed/smart-secrets-scanner-train-v3.jsonl (1000+ examples total)
+   ```
+
+4. **Retrain Model**
    - Update config for 15 epochs
    ```bash
    python scripts/fine_tune.py
    ```
 
-4. **Evaluate**
+5. **Evaluate**
    - Quick test (10 examples)
    ```bash
    python scripts/evaluate.py --load-in-4bit --max-examples 10
@@ -92,3 +106,8 @@ Expand the training dataset to **1000 examples** that are:
 - **Task 11:** LoRA training (completed)
 - **Task 32:** Evaluation script (in-progress)
 - **Task 38:** Merge adapter with base model (backlog)
+
+## Architecture Reference
+
+This task expanded the LLM-driven dataset creation approach documented in:  
+**ADR 0007: LLM-Driven Dataset Creation for Secret Detection Training** (`adrs/0007-llm-driven-dataset-creation.md`)

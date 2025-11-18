@@ -29,6 +29,7 @@ const alwaysExcludeFiles = [
     'outputs/checkpoints/',
     'models/merged/',
     'outputs/logs/',
+    'reference-files/',
     // Data directories (can be very large)
     'data/evaluation/processed/',
     'data/raw/',

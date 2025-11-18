@@ -19,7 +19,7 @@ flowchart LR
     end
     
     subgraph Processing["Extract & Label"]
-        C[Parse code snippets<br/>Label as ALERT/Safe<br/>Format as JSONL]
+        C[LLM analyzes code snippets<br/>Labels as ALERT/Safe<br/>Formats as JSONL]
     end
     
     subgraph Processed["processed/ (ML-Ready)"]
@@ -79,11 +79,14 @@ Collect code samples → raw/ → Extract snippets → processed/ → Train mode
 
 **Workflow B (Direct JSONL - What We Did):**
 ```
-Create JSONL directly → processed/ → Train model
+LLM creates labeled examples directly → processed/ → Train model
 Use raw/ later for testing complete files
 ```
 
 **Why this approach?**
+- ✅ **LLM-driven labeling**: Uses AI judgment rather than regex patterns for nuanced secret detection
+- ✅ **No extraction script**: Direct creation eliminates the need for complex parsing logic
+- ✅ **Context awareness**: LLM understands programming context and edge cases
 - ✅ Data provenance: Track where examples originated (if using Workflow A)
 - ✅ Reproducibility: Regenerate processed data from raw sources (if using Workflow A)
 - ✅ Testing: Feed complete files to fine-tuned model to simulate pre-commit scanning

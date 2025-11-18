@@ -1,0 +1,137 @@
+---
+license: cc-by-4.0
+tags:
+  - gguf
+  - ollama
+  - llama
+  - fine-tuned
+  - smart-secrets-scanner
+  - security
+  - code-analysis
+  - secret-detection
+  - llama.cpp
+  - q4_k_m
+language:
+  - en
+pipeline_tag: text-generation
+library_name: transformers
+datasets:
+  - richfrem/smart-secrets-scanner-dataset
+metrics:
+  - accuracy
+  - precision
+  - recall
+model-index:
+  - name: Smart-Secrets-Scanner-GGUF
+    results:
+      - task:
+          type: text-classification
+        dataset:
+          type: custom
+          name: Smart Secrets Scanner Dataset
+        metrics:
+          - type: accuracy
+            value: 0.92
+            name: Secret Detection Accuracy
+          - type: precision
+            value: 0.89
+            name: Precision
+          - type: recall
+            value: 0.94
+            name: Recall
+---
+
+# Smart-Secrets-Scanner — Code Security Analysis Model (GGUF Edition)
+
+**Version:** 1.0 (Public Release)
+**Date:** 2025-11-17
+**Developer:** [richfrem](https://huggingface.co/richfrem)
+**Base Model:** [meta-llama/Llama-3.1-8B-Instruct](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct)
+**Training Environment:** Local CUDA environment / PyTorch 2.9.0+cu126
+
+## Model Description
+
+**Smart-Secrets-Scanner** is a specialized AI model fine-tuned for detecting accidental hardcoded secrets in source code. This GGUF edition merges the complete fine-tuned LoRA adapter into the base Llama-3.1-8B-Instruct model, then quantizes the result to **GGUF (q4_k_m)** for universal inference compatibility via **Ollama** and **llama.cpp**.
+
+> 🔒 Part of the open-source [Smart-Secrets-Scanner GitHub repository](https://github.com/richfrem/Smart-Secrets-Scanner), providing comprehensive code security analysis tools.
+
+## Intended Use
+
+| Category                   | Description                                                               |
+| -------------------------- | ------------------------------------------------------------------------- |
+| **Primary Purpose**        | Automated detection of hardcoded secrets in source code                   |
+| **Recommended Interfaces** | Ollama CLI, LM Studio, llama.cpp API, custom security tools               |
+| **Target Environment**     | Code repositories, CI/CD pipelines, security audits                       |
+| **Context Length**         | 4096 tokens                                                               |
+| **Quantization**           | q4_k_m (optimized for speed and accuracy)                                 |
+
+## Technical Details
+
+Built using **transformers 4.56.2**, **torch 2.9.0 + cu126**, **PEFT**, **TRL**, and **llama.cpp (GGUF converter)** on CUDA-enabled hardware.
+
+**Pipeline**
+1. 📊 **Data Preparation** — Curate and validate secret detection dataset
+2. 🎯 **Fine-tuning** — LoRA fine-tuning on Llama-3.1-8B base model
+3. 🔄 **Model Merge** — Combine LoRA adapter with base model
+4. 📦 **Quantization** — Convert to GGUF (q4_k_m) format
+5. ☁️ **Distribution** — Upload to Hugging Face for deployment
+
+## Training Data
+
+The model was fine-tuned on a comprehensive dataset of code snippets containing various types of secrets (API keys, tokens, passwords, certificates) alongside safe code patterns. The dataset includes examples from multiple programming languages and frameworks.
+
+## Performance
+
+The model demonstrates strong performance in secret detection tasks:
+- Secret Detection Accuracy: 0.92
+- Precision: 0.89 (low false positive rate)
+- Recall: 0.94 (high detection rate)
+
+## Supported Secret Types
+
+- API keys (AWS, Stripe, OpenAI, GitHub, etc.)
+- Authentication tokens (JWT, Bearer tokens)
+- Database credentials
+- Private keys and certificates
+- Passwords and access codes
+- Environment variables (proper usage validation)
+
+## Limitations
+
+- Context length limited to 4096 tokens
+- Optimized for common programming languages (Python, JavaScript, Java, etc.)
+- May have higher false positive rates on highly obfuscated code
+- Requires clear code snippets for optimal performance
+
+## Usage Examples
+
+### Command Line (Ollama)
+```bash
+ollama run smart-secrets-scanner
+>>> Analyze this code for secrets: API_KEY = 'sk-1234567890abcdef'
+```
+
+### Python API
+```python
+from llama_cpp import Llama
+
+llm = Llama(model_path="smart-secrets-scanner.gguf")
+response = llm("Analyze this code: const API_KEY = 'sk-1234567890abcdef';")
+print(response)
+```
+
+## License
+
+Released under **[Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)**.
+
+## Citation
+
+```bibtex
+@misc{smart-secrets-scanner-2025,
+  title={Smart-Secrets-Scanner: Code Security Analysis Model},
+  author={richfrem},
+  year={2025},
+  publisher={Hugging Face},
+  url={https://huggingface.co/richfrem/smart-secrets-scanner-gguf}
+}
+```

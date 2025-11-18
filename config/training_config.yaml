@@ -23,9 +23,9 @@ model:
 # --- Dataset Configuration ---
 data:
   # Path to your training data file, relative to the project root.
-  train_file: "data/processed/smart-secrets-scanner-train-v3.jsonl"
+  train_file: "data/processed/smart-secrets-scanner-dataset.jsonl"
   # It's highly recommended to also have a validation set to monitor for overfitting.
-  val_file: "data/processed/smart-secrets-scanner-val-v3.jsonl" # Placeholder for future use.
+  val_file: "data/processed/smart-secrets-scanner-val.jsonl" # Will be created automatically if missing
 
 # --- Hardware & Performance Configuration ---
 # Updated: 256 is proven for 3-4x speedup on 8GB GPUs with minimal trade-offs (shorter context, lower VRAM).

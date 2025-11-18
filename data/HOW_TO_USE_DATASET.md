@@ -1,16 +1,14 @@
 # How to Use the Smart Secrets Scanner Dataset
 
-## Dataset Files
+## Dataset Creation Approach
 
-### Training Data
-**File**: `data/processed/smart-secrets-scanner-train.jsonl`  
-**Size**: 56 examples  
-**Purpose**: Fine-tune the LLM to detect secrets in code  
+**LLM-Driven Creation**: Unlike traditional datasets created through automated scripts or manual curation, this dataset was created directly by LLM analysis. The LLM applied human-like judgment to analyze code snippets and generate labeled examples, allowing for nuanced understanding of security context and edge cases.
 
-### Validation Data
-**File**: `data/processed/smart-secrets-scanner-val.jsonl`  
-**Size**: 16 examples  
-**Purpose**: Validate model performance during training  
+**Key Advantages**:
+- Context-aware labeling (beyond regex patterns)
+- Natural language explanations
+- Handles edge cases and obfuscation techniques
+- No deterministic script required  
 
 ---
 
@@ -253,3 +251,10 @@ done
 5. ⏭️ Benchmark vs regex tools (New task)
 
 **Ready to fine-tune! 🚀**
+
+---
+
+## Architecture Decision
+
+For details on the LLM-driven dataset creation approach (vs. traditional script-based methods), see:  
+**ADR 0007: LLM-Driven Dataset Creation for Secret Detection Training** (`adrs/0007-llm-driven-dataset-creation.md`)

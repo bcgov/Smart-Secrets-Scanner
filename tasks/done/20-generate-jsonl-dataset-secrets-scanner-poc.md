@@ -111,13 +111,20 @@ No secrets detected. <Brief explanation of why code is safe>.
 - **Output file**: `data/processed/smart-secrets-scanner-train.jsonl`
 - **Validation split**: Create `smart-secrets-scanner-val.jsonl` with 10-20 examples for validation
 
-## Quality Criteria
+## Implementation Approach
 
-- ✅ Each example must be realistic and production-quality
-- ✅ Output messages must be clear and actionable
-- ✅ Code snippets should represent real-world scenarios
-- ✅ Diversity in programming languages and frameworks
-- ✅ No real leaked credentials (use synthetic examples only)
+**LLM-Driven Direct Creation**: Unlike traditional dataset creation that involves collecting raw data and processing it through scripts, this dataset was created directly by LLM analysis and generation. The LLM served as both the data generator and quality assessor, creating complete instruction-input-output examples from scratch without intermediate processing steps.
+
+### Creation Process
+
+1. **LLM Analysis**: LLM analyzed secret detection requirements and research findings
+2. **Direct Generation**: Created complete JSONL examples with realistic code snippets and appropriate labels
+3. **Quality Assurance**: Applied consistent judgment across all examples for accuracy and balance
+4. **Edge Case Coverage**: Included nuanced scenarios requiring contextual understanding
+
+### Key Architectural Difference
+
+This approach eliminated the traditional data engineering pipeline (collect → extract → label → format) in favor of AI-native dataset creation, resulting in higher quality examples with better contextual understanding than rule-based methods.
 
 ## Deliverables ✅ COMPLETED
 
@@ -216,3 +223,8 @@ After completion:
 3. Proceed to Task 08: Run fine-tune (or update with specific fine-tuning task)
 4. Update task counter to 21
 5. Consider benchmark testing against regex-based tools (detect-secrets, GitGuardian)
+
+## Architecture Reference
+
+This task implemented the LLM-driven dataset creation approach documented in:  
+**ADR 0007: LLM-Driven Dataset Creation for Secret Detection Training** (`adrs/0007-llm-driven-dataset-creation.md`)

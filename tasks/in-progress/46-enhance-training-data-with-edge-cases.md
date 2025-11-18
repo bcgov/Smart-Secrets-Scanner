@@ -55,8 +55,8 @@ The model has **100% recall** (catches all real secrets) but **58.8% precision**
 
 ## Acceptance Criteria
 
-- [ ] Add 50+ edge case examples to training data generation script
-- [ ] Generate balanced dataset: 200 ALERT + 200 SAFE (400 total)
+- [ ] Generate 50+ additional edge case examples using LLM direct creation
+- [ ] Create balanced dataset: 200 ALERT + 200 SAFE (400 total) via LLM
 - [ ] Include nuanced safe examples:
   - [ ] Firebase public keys
   - [ ] Documentation placeholders
@@ -71,74 +71,37 @@ The model has **100% recall** (catches all real secrets) but **58.8% precision**
 
 ## Implementation Steps
 
-### 1. Update `scripts/generate_simple_training_data.py`
+### 1. LLM-Generated Edge Cases
 
-Add new safe pattern categories:
+Use LLM to directly generate additional training examples focusing on edge cases that cause false positives:
 
-```python
-# Public API keys (safe to commit)
-PUBLIC_API_KEYS = [
-    ('apiKey', 'AIzaSyB-PUBLIC123-ReadOnlyKey'),  # Firebase public
-    ('GOOGLE_MAPS_KEY', 'AIzaSyPublicKeyForWebClient'),
-    ('STRIPE_PUBLISHABLE_KEY', 'pk_test_51H...'),  # Stripe public
-]
+**Safe Pattern Categories to Generate:**
+```json
+// Public API keys (safe to commit)
+{"instruction": "...", "input": "firebase_key = 'AIzaSyB-PUBLIC123-ReadOnlyKey'", "output": "No secrets detected."}
 
-# Documentation placeholders (safe examples)
-PLACEHOLDER_VALUES = [
-    ('API_KEY', 'YOUR_API_KEY_HERE'),
-    ('SECRET_TOKEN', '<your-token-here>'),
-    ('PASSWORD', 'your_password'),
-    ('AWS_KEY', 'AKIAIOSFODNN7EXAMPLE'),  # AWS example key
-]
+// Documentation placeholders (safe examples)
+{"instruction": "...", "input": "API_KEY = 'YOUR_API_KEY_HERE'", "output": "No secrets detected."}
 
-# API endpoints without credentials (safe)
-API_ENDPOINTS = [
-    ('API_URL', 'https://api.example.com/v1/users'),
-    ('ENDPOINT', 'https://jsonplaceholder.typicode.com/posts'),
-    ('BASE_URL', 'https://api.github.com'),
-]
+// API endpoints without credentials (safe)
+{"instruction": "...", "input": "api_url = 'https://api.example.com/v1/users'", "output": "No secrets detected."}
 
-# Configuration examples (safe)
-CONFIG_EXAMPLES = [
-    ('db_host', 'localhost'),
-    ('PORT', '5432'),
-    ('DEBUG', 'True'),
-    ('MAX_CONNECTIONS', '100'),
-]
+// Configuration examples (safe)
+{"instruction": "...", "input": "DEBUG = True; PORT = 5432", "output": "No secrets detected."}
 ```
 
-### 2. Update Generation Logic
+**Prompt for LLM Generation:**
+```
+Generate 50 JSONL examples for secret detection training. Focus on edge cases that commonly cause false positives:
 
-```python
-def generate_training_data(num_alert=200, num_safe=200):
-    """Generate training data with edge cases"""
-    examples = []
-    
-    # Generate alert examples (actual secrets)
-    for _ in range(num_alert):
-        secret_type = random.choice(list(SECRETS.keys()))
-        var_name, value = random.choice(SECRETS[secret_type])
-        examples.append(generate_alert_example(secret_type, var_name, value))
-    
-    # Generate safe examples (mix of all categories)
-    safe_categories = [
-        (SAFE_PATTERNS, 0.4),          # 40%: env vars, config.get()
-        (PUBLIC_API_KEYS, 0.2),        # 20%: public keys
-        (PLACEHOLDER_VALUES, 0.2),     # 20%: placeholders
-        (API_ENDPOINTS, 0.1),          # 10%: endpoints
-        (CONFIG_EXAMPLES, 0.1),        # 10%: config
-    ]
-    
-    for _ in range(num_safe):
-        category, _ = random.choices(
-            safe_categories, 
-            weights=[w for _, w in safe_categories]
-        )[0]
-        pattern = random.choice(category)
-        examples.append(generate_safe_example(pattern))
-    
-    random.shuffle(examples)
-    return examples
+1. Public API keys (Firebase, Google Maps, Stripe publishable keys)
+2. Documentation placeholders (YOUR_API_KEY_HERE, <token>, example values)
+3. API endpoints and URLs without embedded secrets
+4. Configuration values (ports, debug flags, hostnames)
+5. Environment variable usage patterns
+6. Test fixtures and mock data
+
+For each example, create realistic code snippets that look like secrets but are actually safe. Label them as "No secrets detected." with appropriate explanations.
 ```
 
 ### 3. Retrain Model
@@ -183,8 +146,9 @@ After retraining with enhanced data:
 
 ## Files to Modify
 
-- `scripts/generate_simple_training_data.py` - Add edge case examples
+- `data/processed/smart-secrets-scanner-train-v2.jsonl` - Create new dataset with edge cases
 - `config/training_config.yaml` - Increase epochs to 15
+- `scripts/fine_tune.py` - Update dataset path to use v2 dataset
 - (Optional) `scripts/evaluate.py` - Add breakdown by error type
 
 ## Success Metrics
@@ -247,3 +211,8 @@ python scripts/inference.py --input "apiKey = 'AIzaSyB-PUBLIC123'" --load-in-4bi
 - **Task 37**: Create inference script (done)
 - **Task 38**: Merge adapter with base model (backlog)
 - **Task 39**: Convert to GGUF (backlog)
+
+## Architecture Reference
+
+This task relates to the LLM-driven dataset creation approach documented in:  
+**ADR 0007: LLM-Driven Dataset Creation for Secret Detection Training** (`adrs/0007-llm-driven-dataset-creation.md`)

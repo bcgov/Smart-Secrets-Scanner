@@ -259,16 +259,36 @@ python scripts/test_llama_cpp.py
 
 Ensure your `(ml_env)` is active for all subsequent commands.
 
-### 1. Forge the "Whole Genome" Dataset
+### 1. Prepare Your Training Dataset
 
-Run the `forge_whole_genome_dataset.py` script to assemble the training data from your project's markdown and text files. This is the **essential first step** before training can begin.
+The training dataset is created directly by the LLM using an innovative approach that eliminates traditional data engineering pipelines (see ADR 0007: LLM-Driven Dataset Creation). This dataset consists of approximately **1000 rows** of high-quality, diverse training examples.
 
-```bash
-python scripts/forge_whole_genome_dataset.py
+**Dataset Requirements:**
+- **Format**: JSONL (JSON Lines) format with one training example per line
+- **Size**: Target of 1000+ examples for effective fine-tuning
+- **Structure**: Each example contains three fields:
+  - `instruction`: The task description for the model
+  - `input`: Code snippet to analyze for secrets
+  - `output`: Expected analysis result (ALERT or no secrets detected)
+
+**Example Dataset Entry:**
+```json
+{
+  "instruction": "Analyze this code snippet for hardcoded secrets such as API keys, passwords, tokens, and other sensitive information. Respond with ALERT if secrets are found, otherwise respond with no secrets detected.",
+  "input": "API_KEY = 'sk-1234567890abcdef'",
+  "output": "ALERT: Hardcoded API key detected. This appears to be an OpenAI API key that should be stored securely in environment variables."
+}
 ```
-This will create the `smart-secrets-scanner-dataset.jsonl` file in your `data/processed` directory.
 
-### 2. Validate the Forged Dataset
+**Dataset Coverage:**
+- Multiple programming languages (Python, JavaScript, Java, etc.)
+- Various secret types (API keys, passwords, tokens, certificates, database credentials)
+- Edge cases (environment variables, test data, placeholders, obfuscated secrets)
+- Both positive examples (containing secrets) and negative examples (safe code)
+
+The dataset should be placed in the `data/processed` directory as `smart-secrets-scanner-dataset.jsonl`. This is the **essential first step** before training can begin.
+
+### 2. Validate the Dataset
 
 After creating the dataset, run the validation script to check it for errors.
 
@@ -293,42 +313,162 @@ python scripts/fine_tune.py
 ```
 The final LoRA adapter will be saved to `models/fine-tuned/smart-secrets-scanner-lora/`.
 
+**Verification:** After completion, verify the adapter is saved correctly by checking the directory contents:
+```bash
+ls -la models/fine-tuned/smart-secrets-scanner-lora/
+```
+Ensure `adapter_model.safetensors` and `adapter_config.json` are present. For a quick integrity test, run:
+```bash
+python scripts/inference.py --input "Test prompt"
+```
+If it loads and generates output without errors, the adapter is valid.
+
 ### 5. Merge the Adapter
 
 Combine the trained adapter with the base model to create a full, standalone fine-tuned model.
 
 ```bash
-python scripts/merge_adapter.py
+python scripts/merge_adapter.py --skip-sanity
 ```
 The merged model will be saved to `models/merged/smart-secrets-scanner/`.
+
+**Verification:** After completion, verify the merged model by testing it:
+```bash
+python scripts/inference.py --model-type merged --input "Test prompt"
+```
+If it loads and generates output without errors, the merged model is valid and ready for GGUF conversion.
 
 ---
 
 ## Phase 3: Deployment Preparation & Verification
+
+### setup for gguf
+Llama-3.1-8B uses SentencePiece tokenizer → convert_hf_to_gguf.py requires the sentencepiece Python package or it dies exactly where you saw it.
+Run this right now in your activated (ml_env):
+
+```bash
+pip install sentencepiece protobuf
+```
 
 ### 1.  Convert to GGUF Format
 
 Convert the merged model to the GGUF format required by Ollama.
 
 ```bash
-python scripts/convert_to_gguf.py --model_path models/merged/smart-secrets-scanner --output_path models/fine-tuned/gguf/smart-secrets-scanner.gguf --quantization Q4_K_M
+python scripts/convert_to_gguf.py --quant Q4_K_M --force
 ```
 The final quantized `.gguf` file will be saved to `models/fine-tuned/gguf/smart-secrets-scanner.gguf`.
 
+---
 
-### 2. Deploy to Ollama
+### 2. Test gguf file locally with ollama
 
-**a. Create a `Modelfile` in your project root:**
+**2a. Generate Modelfile Automatically:**
+
+Run the bulletproof Modelfile generator script:
+
+```bash
+python scripts/create_modelfile.py
 ```
-# ===================================================================
-# Canonical Modelfile for Smart-Secrets-Scanner-Llama-3.1-8B-v1.0
-# ===================================================================
 
-# 1. Specifies the local GGUF model file to use as the base.
-FROM ./models/fine-tuned/gguf/smart-secrets-scanner.gguf
+This creates a production-ready Modelfile with auto-detected GGUF path, official Llama-3.1-8B template, full Smart-Secrets-Scanner system prompt, and optimized parameters.
 
-# 2. Defines the ChatML prompt template required by the Qwen2 model family.
-# The multiline format makes this much easier to read and verify.
+**2b. Import to Ollama:**
+```bash
+ollama create smart-secrets-scanner -f Modelfile
+```
+
+**2c. Run locally in Ollama:**
+```bash
+ollama run smart-secrets-scanner
+```
+
+---
+
+**2d. Test Both Interaction Modes:**
+
+After running `ollama run smart-secrets-scanner`, you can test the model's dual-mode capability:
+
+**Mode 1 - Plain Language Conversational Mode (Default):**
+The model responds naturally and helpfully to direct questions and requests.
+```bash
+>>> Analyze this code for secrets: API_KEY = 'sk-1234567890abcdef'
+>>> What types of secrets should I look for in code?
+>>> Explain how to securely handle API keys
+>>> Who is the Smart-Secrets-Scanner?
+```
+
+**Mode 2 - Structured Analysis Mode:**
+When provided with code input, the model switches to generating security analysis for secret detection.
+```bash
+>>> {"task_type": "secret_scan", "code_snippet": "const API_KEY = 'sk-1234567890abcdef'; const DB_PASS = 'admin123';", "analysis_type": "comprehensive"}
+```
+*Expected Response:* The model outputs a structured analysis identifying potential security risks.
+
+This demonstrates Smart-Secrets-Scanner's ability to handle both human conversation and automated code analysis seamlessly.
+
+---
+
+### 3. Verify Model Performance
+
+**Note:** This section tests the local merged model (created in Phase 2) using Python inference scripts for comprehensive evaluation. For Ollama-based chat testing, see Section 2 above. After uploading to Hugging Face, compare performance with Section 5 (HF download testing).
+
+**3a. Quick Inference Test:**
+Use the `inference.py` script for a quick spot-check.
+```bash
+python scripts/inference.py --input "Analyze this code for secrets: API_KEY = 'sk-1234567890abcdef'"
+```
+
+**3b. (Recommended) Full Evaluation:**
+Run a full evaluation against a held-out test set to get objective performance metrics.
+
+```bash
+pip install evaluate rouge-score
+```
+
+```bash
+python scripts/evaluate.py
+```
+
+**3c. Real body of knowledge (BOK) test crucial**
+Test with actual code examples containing secrets:
+```bash
+python scripts/inference.py --model-type merged --file path/to/test_code_with_secrets.py
+```
+
+---
+
+### 4. Upload to Hugging Face
+
+Run the automated upload script to upload the GGUF model, Modelfile, and README to your Hugging Face repository:
+
+```bash
+python scripts/upload_to_huggingface.py --repo yourusername/your-repo-name --gguf --modelfile --readme
+```
+
+Replace `yourusername/your-repo-name` with your actual Hugging Face repository ID (e.g., `richfrem/Smart-Secrets-Scanner-Model`).
+
+The script will:
+- Authenticate using your `HUGGING_FACE_TOKEN` from `.env`
+- Create the repository if it doesn't exist
+- Upload the specified files
+
+After upload, your model will be available at: https://huggingface.co/yourusername/your-repo-name
+
+---
+
+### 5. download and test hugging face model
+
+**5a. Download from Hugging Face:**
+Download the model files from Hugging Face for verification.
+
+After downloading the model from Hugging Face, test it locally in Ollama to verify the upload/download process didn't corrupt the model and that inference works correctly. Compare performance with the local tests in Section 3 to ensure consistency.
+
+**5b. Create Modelfile for Downloaded Model:**
+Create a new `Modelfile` (e.g., `Modelfile_HF`) pointing to the downloaded GGUF file:
+```
+FROM ./downloaded_models/smart-secrets-scanner-Q4_K_M.gguf
+
 TEMPLATE """{{ if .System }}<|im_start|>system
 {{ .System }}<|im_end|>
 {{ end }}{{ if .Prompt }}<|im_start|>user
@@ -336,8 +476,6 @@ TEMPLATE """{{ if .System }}<|im_start|>system
 {{ end }}<|im_start|>assistant
 """
 
-# 3. Sets the constitutional system prompt. This "inoculates" the model
-# with its core identity during every conversation.
 SYSTEM """You are a specialized code security analyzer trained to detect accidental hardcoded secrets (API keys, tokens, passwords, etc.) in source code.
 
 Your task is to scan code snippets and identify potential security risks such as:
@@ -352,35 +490,24 @@ For safe code (environment variables, test data, placeholders), respond "No secr
 
 Be precise and minimize false positives while catching real security issues."""
 
-# 4. Defines stop tokens to prevent the model from hallucinating extra
-# user/assistant turns in the conversation.
 PARAMETER stop "<|im_start|>"
 PARAMETER stop "<|im_end|>"
 ```
 
-**b. Import and run the model with Ollama:**
+**5c. Import to Ollama:**
 ```bash
-ollama create smart-secrets-scanner -f Modelfile
-ollama run smart-secrets-scanner
+ollama create smart-secrets-scanner-HF -f Modelfile_HF
 ```
 
-### 3. Verify Model Performance
+**5d. Direct Run from Hugging Face (Recommended):**
+Ollama can run the model directly from Hugging Face without downloading it first. This is the most convenient method:
 
-**a. Quick Inference Test:**
-Use the `inference.py` script for a quick spot-check.
 ```bash
-python scripts/inference.py --input "Analyze this code for secrets: API_KEY = 'sk-1234567890abcdef'"
+ollama run hf.co/richfrem/Smart-Secrets-Scanner-Model:Q4_K_M
 ```
 
-**b. (Recommended) Full Evaluation:**
-Run a full evaluation against a held-out test set to get objective performance metrics.
-```bash
-python scripts/evaluate.py
-```
+This command will automatically download and run the model from Hugging Face on-demand.
 
-**c. (Crucial) Test with Real BOK Examples:**
-Use the inference script to test the model against real, complex examples from the Smart-Secrets-Scanner test cases.
-```bash
-python scripts/inference.py --file path/to/real_BOK_document.txt
-```
+**5e. Test Inference:**
+Then, provide test prompts to verify the model responds correctly, such as: "Analyze this code for secrets: API_KEY = 'sk-1234567890abcdef'".
 
