@@ -16,7 +16,7 @@
 ⏳ **Task 32**: Model evaluation (need comprehensive metrics)  
 
 ## Description
-Complete the model card (`notebooks/model_card.yaml` or `MODEL_CARD.md`) following Hugging Face standards to document the fine-tuned model.
+Complete the model card (`huggingface/model_card.yaml`) following Hugging Face standards to document the fine-tuned model for Hugging Face Hub deployment.
 
 ## Requirements
 - Understanding of model card structure and purpose
@@ -25,13 +25,13 @@ Complete the model card (`notebooks/model_card.yaml` or `MODEL_CARD.md`) followi
 - Hugging Face model card template
 
 ## Acceptance Criteria
-- [ ] `MODEL_CARD.md` created or `notebooks/model_card.yaml` completed
-- [ ] All required sections filled out
+- [ ] `huggingface/model_card.yaml` completed with all required sections
+- [ ] All required sections filled out for Hugging Face Hub
 - [ ] Training data documented with statistics
 - [ ] Hyperparameters and training procedure described
 - [ ] Evaluation metrics included
 - [ ] Limitations and ethical considerations addressed
-- [ ] Usage examples provided
+- [ ] Usage examples provided for Hugging Face deployment
 
 ## Model Card Template
 
@@ -98,10 +98,10 @@ This model is fine-tuned to identify hardcoded secrets (API keys, passwords, tok
 
 ## Training Data
 
-**Dataset**: Custom JSONL dataset for Smart Secrets Scanner POC  
-**Training Examples**: 56  
-**Validation Examples**: 16  
-**Test Examples**: 20  
+**Dataset**: Custom JSONL dataset for Smart Secrets Scanner (LLM-driven generation)  
+**Training Examples**: 8  
+**Validation Examples**: 1  
+**Test Examples**: TBD  
 
 **Secret Types Covered**:
 - Cloud providers: AWS, Azure, GCP
@@ -122,20 +122,20 @@ This model is fine-tuned to identify hardcoded secrets (API keys, passwords, tok
 ## Training Procedure
 
 ### Hyperparameters
-- **Base Model**: meta-llama/Meta-Llama-3-8B
+- **Base Model**: meta-llama/Llama-3.1-8B-Instruct
 - **LoRA Rank**: 16
 - **LoRA Alpha**: 32
 - **Learning Rate**: 2e-4
 - **Batch Size**: 4 (effective: 16 with gradient accumulation)
-- **Epochs**: 5
+- **Epochs**: 15 (completed in 1 epoch due to small dataset)
 - **Optimizer**: paged_adamw_8bit
 - **Max Sequence Length**: 2048 tokens
 
 ### Training Environment
-- **Hardware**: NVIDIA GPU (WSL2 Ubuntu)
-- **Framework**: Unsloth / Hugging Face Transformers
-- **Training Time**: ~XX minutes
-- **Final Loss**: X.XX
+- **Hardware**: NVIDIA RTX 2000 Ada GPU (8GB VRAM)
+- **Framework**: Hugging Face Transformers + PEFT
+- **Training Time**: ~1:43 minutes
+- **Final Loss**: 0.776
 
 ### Fine-Tuning Approach
 LoRA adapters trained on instruction-following format (Alpaca):
