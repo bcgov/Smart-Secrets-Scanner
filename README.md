@@ -1,59 +1,69 @@
 # Smart-Secrets-Scanner
 
 ## Project Overview and Repo Purpose
-This project fine‑tunes Meta Llama 3.1 (8B) using LoRA/QLoRA to detect accidental hardcoded secrets (API keys, tokens, passwords, etc.) in source code. It uses the BC Gov `ML-Env-CUDA13` WSL/conda environment for GPU‑accelerated training and deterministic inference.
+This project fine‑tunes Meta Llama 3.1 (8B) using LoRA/QLoRA to detect accidental hardcoded secrets (API keys, tokens, passwords, etc.) in source code. It uses a comprehensive WSL/CUDA environment setup for GPU‑accelerated training and deterministic inference.
 
-**🚀 Enhanced Training Pipeline**: The `fine_tune.py` script includes production-ready features like system diagnostics, automatic checkpoint resume, optimized dataloader parameters, and **implemented 3-4x performance optimizations** (reduced sequence length from 2048→256, optimized batching, fp16 precision). *Performance improvements pending validation testing.*
+**🚀 Systematic Workflow Execution**: Following the `CUDA-ML-ENV-SETUP.md` protocol, we've successfully completed environment setup, dataset preparation (72 examples), base model download (15-30GB), and are currently executing LoRA fine-tuning. The project uses a task-based tracking system with real-time git commits to maintain reproducible progress.
 
-The repository provides a reproducible pipeline and scripts to prepare JSONL datasets, train adapters, merge and export models (GGUF), run evaluations, and deploy to runtimes such as Ollama or Hugging Face. This project is primarily an example and experimentation platform for CUDA‑accelerated fine‑tuning — it is not intended to replace production secret‑scanning products (for example, Snyk).
+**🎯 Current Status (November 2025)**: Actively executing Phase 2 of the workflow - LoRA fine-tuning is running in WSL with structured logging and checkpointing. Next steps: adapter merging → GGUF conversion → Ollama deployment.
 
-Purpose: demonstrate GPU‑accelerated fine‑tuning and provide reproducible tools and tests for model export and deployment while following BC Gov licensing and governance guidance.
+The repository provides a reproducible pipeline and scripts to prepare JSONL datasets, train adapters, merge and export models (GGUF), run evaluations, and deploy to runtimes such as Ollama or Hugging Face. This project demonstrates systematic GPU‑accelerated fine‑tuning with comprehensive task tracking and follows BC Gov licensing and governance guidance.
 
 > ⚠️ Important: this repository is a demonstration and research project. The embedded "Smart Secrets Scanner" examples are intended for experimentation and testing of CUDA-accelerated fine-tuning only. They are not a production-grade secret-scanning solution and must not be used as a replacement for established commercial or enterprise secret-scanning tools (for example, Snyk or Wiz). Use this project to learn and validate model workflows, and rely on proven scanning products for operational security.
 
 ## Prerequisites
-- [ML-Env-CUDA13](https://github.com/bcgov/ML-Env-CUDA13) cloned at the same level as this project
-- WSL2 (Ubuntu) with NVIDIA GPU drivers
-- Python 3.10+ (managed by ML-Env-CUDA13)
-- **Install ML-Env-CUDA13 dependencies before running fine-tuning scripts**
+- **WSL2 (Ubuntu)** with NVIDIA GPU drivers (latest version)
+- **Python 3.11** (managed by our custom setup)
+- **CUDA 12.6** with PyTorch 2.9.0+cu126
+- **Git LFS** for large file handling
+- **Hugging Face account** with access token for model downloads
 
-### CUDA ML environment (WSL) — recommended
+### CUDA ML Environment Setup — Recommended Approach
 
-This repository includes a dedicated setup guide with step-by-step WSL/ML-Env instructions and a WSL-specific pinned requirements file. If you are using WSL/Ubuntu for GPU-enabled work, follow `CUDA-ML-ENV-SETUP.md` and prefer the WSL-specific requirements file:
+This repository uses a comprehensive, validated setup protocol documented in `CUDA-ML-ENV-SETUP.md`. Our approach provides deterministic CUDA environment creation with surgical binary installations for optimal performance.
 
-- See: `CUDA-ML-ENV-SETUP.md` for a complete, reproducible setup workflow (WSL, NVIDIA drivers, staged installs).
-- Use `requirements-wsl.txt` when installing inside WSL — it contains the PyTorch CUDA wheel index and tested CUDA pins (for example `torch==2.8.0+cu126`).
+**Key Dependencies (Validated November 2025):**
+- **PyTorch**: 2.9.0+cu126 (CUDA-enabled)
+- **Transformers**: Latest compatible version
+- **PEFT**: For LoRA/QLoRA fine-tuning
+- **BitsAndBytes**: 0.48.2 (CUDA 12.6 native support)
+- **Accelerate**: For distributed training
+- **TRL**: For supervised fine-tuning
+- **Llama.cpp**: Built with GGML_CUDA=ON for GPU acceleration
 
-Recommended install approach (short):
+Recommended install approach (validated protocol):
 
-1. Start with a clean slate (remove any old environment):
-
+1. **Start with clean slate** (remove any old environments):
 ```bash
 deactivate 2>/dev/null || true
 rm -rf ~/ml_env
 ```
 
-2. Run the all-in-one setup script (requires sudo for system packages):
-
+2. **Run our validated setup script** (requires sudo for system packages):
 ```bash
 sudo python3 scripts/setup_cuda_env.py --staged --recreate
 ```
 
-3. Activate the new environment and verify:
+3. **Execute surgical CUDA binary installations** (critical for performance):
+```bash
+source ~/ml_env/bin/activate
+# Follow the "Surgical Strike" protocol in CUDA-ML-ENV-SETUP.md
+# Installs: bitsandbytes 0.48.2, triton 3.5.0, xformers with CUDA support
+```
 
+4. **Verify complete environment**:
 ```bash
 source ~/ml_env/bin/activate
 python scripts/test_torch_cuda.py
-python scripts/test_xformers.py
-python scripts/test_tensorflow.py
 python scripts/test_pytorch.py
+python scripts/test_xformers.py
 python scripts/test_llama_cpp.py
 ```
 
-4. Install git-lfs for large file support:
-
+5. **Install Git LFS**:
 ```bash
 sudo apt update && sudo apt install git-lfs
+git lfs install
 ```
 
 ### One-time activities
@@ -111,15 +121,15 @@ sequenceDiagram
     participant Deploy as 🚀 Deployment
 
     User->>Data: 1. Create JSONL training data
-    Note over Data: data/processed/train.jsonl (56 examples)<br/>data/processed/val.jsonl (16 examples)
+    Note over Data: data/processed/smart-secrets-scanner-dataset.jsonl<br/>(72 validated examples - LLM-driven generation)
     
     User->>Base: 2. Download base model
-    Note over Base: models/base/Meta-Llama-3.1-8B/<br/>(15-30 GB)
+    Note over Base: models/base/Meta-Llama-3.1-8B/<br/>(15-30 GB from Hugging Face)
     
     Data->>Train: 3. Load training data
     Base->>Train: 4. Load base model
     Train->>Train: 5. Fine-tune with LoRA/QLoRA
-    Note over Train: outputs/checkpoints/<br/>outputs/logs/
+    Note over Train: outputs/checkpoints/<br/>outputs/logs/ (currently running)
     
     Train->>Export: 6. Merge base + adapter
     Note over Export: models/merged/<br/>(full model weights)
@@ -128,10 +138,10 @@ sequenceDiagram
     Note over Export: models/gguf/<br/>smart-secrets-scanner.gguf
     
     Export->>Test: 8. Test with JSONL
-    Note over Test: evaluation/test.jsonl<br/>Calculate metrics
+    Note over Test: evaluation/test.jsonl<br/>Calculate precision/recall/F1
     
     Export->>Test: 9. Test with raw files
-    Note over Test: Feed .py, .js, .yaml files<br/>Check detections
+    Note over Test: Feed .py, .js, .yaml files<br/>Check secret detections
     
     Test->>Deploy: 10. Deploy to Ollama/llama.cpp
     Note over Deploy: Create Modelfile<br/>Run pre-commit scans
@@ -146,7 +156,7 @@ graph TD
     subgraph "Phase 1: Environment & Data (30-60 min)"
         A["<i class='fa fa-cogs'></i> setup_cuda_env.py<br/>*Unified environment setup*<br/>*Installs CUDA + PyTorch*<br/>&nbsp;"]
         A1["<i class='fa fa-check-circle'></i> Verify Environment<br/>*Run test scripts*<br/>*Check CUDA availability*<br/>&nbsp;"]
-        B["<i class='fa fa-pen-ruler'></i> Manual Data Assembly<br/>*Create training JSONL*<br/>*56 train + 16 val examples*<br/>&nbsp;"]
+        B["<i class='fa fa-pen-ruler'></i> LLM-Driven Dataset Creation<br/>*72 training examples*<br/>*JSONL format with secrets*<br/>&nbsp;"]
         B1["<i class='fa fa-search'></i> validate_dataset.py<br/>*Validate data quality*<br/>*Check schema & balance*<br/>&nbsp;"]
         A_out(" <i class='fa fa-folder-open'></i> ~/ml_env venv")
         A1_out(" <i class='fa fa-check'></i> Environment Verified")
@@ -244,27 +254,25 @@ graph TD
 > **⚠️ Note on Datasets**: Training data files (`.jsonl`) are **intentionally excluded** from this repository via `.gitignore` to avoid triggering GitHub's secret scanning on example secrets. The dataset structure and templates are documented in `data/README.md`. You can generate your own training data using the provided validation script.
 
 #### **Phase 1: Data Preparation** 📊
-1. **Create JSONL training data** → `data/processed/smart-secrets-scanner-train.jsonl`
-   - 56 examples with instruction/input/output format
-   - Covers secrets (AWS, Stripe, GitHub tokens) and safe patterns (env vars, test data)
-2. **Create JSONL validation data** → `data/processed/smart-secrets-scanner-val.jsonl`
-   - 16 examples for monitoring training progress
-3. **(Optional) Create test files** → `data/evaluation/` or `data/raw/`
-   - Complete source files (.py, .js, .yaml) for testing
+1. **Create JSONL training data** → `data/processed/smart-secrets-scanner-dataset.jsonl`
+   - **72 validated examples** with instruction/input/output format (LLM-driven generation)
+   - Covers secrets (AWS, Stripe, GitHub tokens, API keys) and safe patterns (env vars, test data)
+   - **Architecture Decision Record**: See `adrs/0007-llm-driven-dataset-creation.md`
+2. **Validate training dataset** → Comprehensive quality checks
+   - Schema validation, balance verification, secret pattern coverage
 
 #### **Phase 2: Model Fine-Tuning** 🎓
 4. **Download base model** → `models/base/Meta-Llama-3.1-8B/`
-   - From [Hugging Face](https://huggingface.co/meta-llama/Llama-3.1-8B) (requires auth token)
-   - 15-30 GB download
+   - ✅ **Completed**: Successfully downloaded 15-30GB from Hugging Face
+   - Uses authenticated token from `.env` file
 5. **Fine-tune with LoRA/QLoRA** → Creates adapter in `models/fine-tuned/`
-   - **Enhanced production script** with system diagnostics and resume capability
-   - **Implemented 3-4x performance optimizations**: Reduced sequence length (256), optimized dataloader *(pending validation)*
-   - **Automatic validation split creation** if missing (90/10 split)
-   - **Professional logging** with structured output and progress tracking
-   - 15 epochs on training data with gradient accumulation
-   - Monitor validation loss and GPU utilization
-6. **Review training logs** → `outputs/logs/`
-   - Check loss curves, learning rate, metrics
+   - 🔄 **Currently Running**: `python scripts/fine_tune.py` executing in WSL
+   - **Production script** with system diagnostics, checkpoint resume, and structured logging
+   - **Optimized configuration**: 4-bit quantization, LoRA r=16, alpha=32, dropout=0.05
+   - **Real-time monitoring**: `tail -f outputs/logs/training.log`
+   - Expected completion: 1-3 hours on RTX 30-series GPU
+6. **Review training logs** → `outputs/logs/` (available during/after training)
+   - Loss curves, validation metrics, GPU utilization tracking
 
 #### **Phase 3: Model Export** 📦
 7. **Merge base model + LoRA adapter** → `models/merged/`
@@ -281,6 +289,40 @@ graph TD
 11. **Test with raw files** → Feed complete .py/.js/.yaml files to model
 12. **Deploy to Ollama** → Create Modelfile, import GGUF, run locally
 13. **Integrate with pre-commit hooks** → Scan code before git commits
+
+---
+
+## Current Project Status (November 2025)
+
+### ✅ **Completed Phases**
+- **Phase 0**: Repository setup, WSL configuration, NVIDIA drivers, llama.cpp build
+- **Phase 1**: Environment setup with `setup_cuda_env.py`, surgical CUDA binary installations
+- **Phase 1**: Dataset creation (72 examples via LLM-driven approach), validation completed
+- **Phase 2**: Base model download (Llama-3.1-8B, 15-30GB) successfully completed
+
+### 🔄 **Currently Executing**
+- **Phase 2**: LoRA fine-tuning actively running in WSL terminal
+- **Real-time progress**: Loading base model → configuring 4-bit quantization → training loop
+- **Monitoring**: `tail -f outputs/logs/training.log`
+- **Expected completion**: 1-3 hours depending on GPU
+
+### 📋 **Next Steps (Pending Fine-tuning Completion)**
+- **Phase 2**: Merge LoRA adapter with base model
+- **Phase 3**: Convert merged model to GGUF format (Q4_K_M quantization)
+- **Phase 3**: Create Ollama Modelfile and test deployment
+- **Phase 4**: Comprehensive evaluation and Hugging Face upload
+
+### 📊 **Key Metrics**
+- **Dataset**: 72 validated training examples (JSONL format)
+- **Model**: Llama-3.1-8B base with LoRA fine-tuning (r=16, alpha=32)
+- **Hardware**: RTX 30-series GPU with CUDA 12.6
+- **Environment**: Python 3.11, PyTorch 2.9.0+cu126
+
+### 📝 **Task Tracking**
+All progress tracked in `tasks/` directory with real-time git commits:
+- ✅ Tasks 58-67: Environment setup and model preparation
+- 🔄 Task 68: Fine-tuning (in progress)
+- 📋 Tasks 69-74: Post-training workflow (pending)
 
 ---
 
@@ -327,30 +369,39 @@ Smart-Secrets-Scanner/
 #### Quick Start - CLI
 
 ```bash
-# Phase 1: Data Preparation (Steps 1-3)
-# Step 1: JSONL training data already created ✅
-# Step 2: Download base model
-bash scripts/download_model.sh
+# Phase 1: Environment & Data Preparation (Completed ✅)
+# Step 1: Environment setup completed with setup_cuda_env.py
+# Step 2: Dataset created and validated (72 examples)
+# Step 3: Base model downloaded successfully
 
-# Step 3: Validate training data
-python scripts/validate_dataset.py data/processed/smart-secrets-scanner-train.jsonl
+# Phase 2: Model Fine-Tuning (Currently Running 🔄)
+# Step 4: Fine-tuning in progress
+python scripts/fine_tune.py  # Currently executing in WSL
 
-# Phase 2: Model Fine-Tuning (Steps 4-6)
-# Step 4: Setup environment
-bash scripts/setup_env.sh
-bash scripts/install_deps.sh
+# Step 5: Monitor training progress
+tail -f outputs/logs/training.log
 
-# Step 5: Fine-tune with LoRA (Enhanced Production Script)
-python scripts/fine_tune.py
+# Phase 3: Model Export (Next Steps 📋)
+# Step 6: Merge adapter with base model
+python scripts/merge_adapter.py --skip-sanity
 
-# Features: System diagnostics, resume capability, optimized dataloader,
-# professional logging, automatic validation split creation, 3-4x speedup (pending validation)
+# Step 7: Convert to GGUF format
+python scripts/convert_to_gguf.py --quant Q4_K_M --force
 
-# Step 6: Review training logs
-tensorboard --logdir outputs/logs
+# Step 8: Create Ollama Modelfile
+python scripts/create_modelfile.py
 
-# Phase 3: Model Export (Steps 7-9)
-# Step 7: Merge base + adapter
+# Step 9: Deploy to Ollama
+ollama create smart-secrets-scanner -f Modelfile
+ollama run smart-secrets-scanner
+
+# Phase 4: Testing & Publishing
+# Step 10: Run comprehensive evaluation
+python scripts/evaluate.py
+
+# Step 11: Upload to Hugging Face
+python scripts/upload_to_huggingface.py --repo yourusername/smart-secrets-scanner --gguf --modelfile --readme
+```
 python scripts/merge_adapter.py
 
 # Step 8: Convert to GGUF
@@ -542,8 +593,11 @@ Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
 ````
 
 ## Notes
-- All scripts designed for Bash/WSL2 (not PowerShell/Windows CMD)
-- Training data ready: 72 examples (56 train, 16 validation)
-- Next: Create test dataset and begin fine-tuning
+- **Environment**: All scripts designed for Bash/WSL2 (not PowerShell/Windows CMD)
+- **Dependencies**: Validated with PyTorch 2.9.0+cu126, CUDA 12.6, Python 3.11
+- **Dataset**: 72 validated training examples (LLM-driven generation, comprehensive secret coverage)
+- **Current Status**: Fine-tuning actively running in WSL (1-3 hours remaining)
+- **Task Tracking**: Comprehensive progress documented in `tasks/` with git commits
+- **Next Steps**: Adapter merging → GGUF conversion → Ollama deployment → evaluation
 
 ---
