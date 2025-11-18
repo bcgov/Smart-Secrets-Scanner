@@ -5,7 +5,7 @@ This project fine‑tunes Meta Llama 3.1 (8B) using LoRA/QLoRA to detect acciden
 
 **🚀 Systematic Workflow Execution**: Following the `CUDA-ML-ENV-SETUP.md` protocol, we've successfully completed environment setup, dataset preparation (72 examples), base model download (15-30GB), and are currently executing LoRA fine-tuning. The project uses a task-based tracking system with real-time git commits to maintain reproducible progress.
 
-**🎯 Current Status (November 2025)**: Actively executing Phase 2 of the workflow - LoRA fine-tuning is running in WSL with structured logging and checkpointing. Next steps: adapter merging → GGUF conversion → Ollama deployment.
+**🎯 Current Status (November 2025)**: LoRA fine-tuning completed successfully with 8 training examples (1:43 runtime, train loss: 0.776). Next steps: adapter merging → GGUF conversion → Ollama deployment.
 
 The repository provides a reproducible pipeline and scripts to prepare JSONL datasets, train adapters, merge and export models (GGUF), run evaluations, and deploy to runtimes such as Ollama or Hugging Face. This project demonstrates systematic GPU‑accelerated fine‑tuning with comprehensive task tracking and follows BC Gov licensing and governance guidance.
 
@@ -16,55 +16,6 @@ The repository provides a reproducible pipeline and scripts to prepare JSONL dat
 - **Python 3.11** (managed by our custom setup)
 - **CUDA 12.6** with PyTorch 2.9.0+cu126
 - **Git LFS** for large file handling
-- **Hugging Face account** with access token for model downloads
-
-### CUDA ML Environment Setup — Recommended Approach
-
-This repository uses a comprehensive, validated setup protocol documented in `CUDA-ML-ENV-SETUP.md`. Our approach provides deterministic CUDA environment creation with surgical binary installations for optimal performance.
-
-**Key Dependencies (Validated November 2025):**
-- **PyTorch**: 2.9.0+cu126 (CUDA-enabled)
-- **Transformers**: Latest compatible version
-- **PEFT**: For LoRA/QLoRA fine-tuning
-- **BitsAndBytes**: 0.48.2 (CUDA 12.6 native support)
-- **Accelerate**: For distributed training
-- **TRL**: For supervised fine-tuning
-- **Llama.cpp**: Built with GGML_CUDA=ON for GPU acceleration
-
-Recommended install approach (validated protocol):
-
-1. **Start with clean slate** (remove any old environments):
-```bash
-deactivate 2>/dev/null || true
-rm -rf ~/ml_env
-```
-
-2. **Run our validated setup script** (requires sudo for system packages):
-```bash
-sudo python3 scripts/setup_cuda_env.py --staged --recreate
-```
-
-3. **Execute surgical CUDA binary installations** (critical for performance):
-```bash
-source ~/ml_env/bin/activate
-# Follow the "Surgical Strike" protocol in CUDA-ML-ENV-SETUP.md
-# Installs: bitsandbytes 0.48.2, triton 3.5.0, xformers with CUDA support
-```
-
-4. **Verify complete environment**:
-```bash
-source ~/ml_env/bin/activate
-python scripts/test_torch_cuda.py
-python scripts/test_pytorch.py
-python scripts/test_xformers.py
-python scripts/test_llama_cpp.py
-```
-
-5. **Install Git LFS**:
-```bash
-sudo apt update && sudo apt install git-lfs
-git lfs install
-```
 
 ### One-time activities
 
@@ -74,35 +25,9 @@ see [tasks\done\01-setup-wsl2-ubuntu.md](tasks\done\01-setup-wsl2-ubuntu.md)
 #### 2. install NVDIA cuda drivers 
 see [tasks\done\02-install-nvidia-cuda-drivers.md](tasks\done\02-install-nvidia-cuda-drivers.md)
 
-#### 3. clone and run the ml environment 
-see [tasks\done\03-clone-ml-env-cuda13.md](tasks\done\03-clone-ml-env-cuda13.md)
-see [tasks\done\04-run-ml-env-setup.md](tasks\done\04-run-ml-env-setup.md)
-```bash
-```bash
-sudo python3 scripts/setup_cuda_env.py --staged --recreate
-```
+For detailed environment setup instructions, see [CUDA-ML-ENV-SETUP.md](CUDA-ML-ENV-SETUP.md).
 
-3. Activate the new environment and verify:
-
-```bash
-source ~/ml_env/bin/activate
-python scripts/test_torch_cuda.py
-python scripts/test_xformers.py
-python scripts/test_tensorflow.py
-python scripts/test_pytorch.py
-python scripts/test_llama_cpp.py
-```
-```
-
-### restarting sessions enabling your environment
-```bash
-source ~/ml_env/bin/activate
-python scripts/test_torch_cuda.py
-python scripts/test_xformers.py
-python scripts/test_tensorflow.py
-python scripts/test_pytorch.py
-python scripts/test_llama_cpp.py
-```
+**Quick Environment Check:** If you have an existing `~/ml_env` from another compatible project, try activating it first and running the verification scripts. Only run the full setup if verification fails.
 
 ---
 
@@ -542,24 +467,10 @@ Prefer referencing repository-provided verification scripts rather than generic 
 
 ## Verify the environment & scripts
 
-Prefer the repository-provided verification scripts rather than generic instructions. Common checks and commands:
+For environment setup and verification, see [CUDA-ML-ENV-SETUP.md](CUDA-ML-ENV-SETUP.md).
 
-WSL / ML-Env verification (ML-Env-CUDA13 sibling repo)
+Repository-specific verification:
 ```bash
-# from inside WSL with the unified environment
-source ~/ml_env/bin/activate
-python scripts/test_pytorch.py
-python scripts/test_tensorflow.py
-```
-
-If you are installing in WSL, run `pip install -r requirements-wsl.txt` (see `CUDA-ML-ENV-SETUP.md` for the recommended staged install). The top-level `requirements.txt` is intended as a portable list; for CUDA-enabled installs prefer `requirements-wsl.txt`.
-
-Repository-specific verification
-```bash
-# Setup and install dependencies (WSL/Bash)
-bash scripts/setup_env.sh
-bash scripts/install_deps.sh
-
 # Validate training data
 python scripts/validate_dataset.py data/processed/smart-secrets-scanner-train.jsonl
 
@@ -569,16 +480,6 @@ python scripts/evaluate.py --test-data data/evaluation/smart-secrets-scanner-tes
 # Run pre-commit / scanner locally against a file
 python scripts/scan_secrets.py --file examples/test.py
 ```
-
-If your environment requires `pytest`/`flake8`, run them after activating the CUDA-enabled ML-Env Python environment (ML-Env-CUDA13) so tests run with the correct CUDA/tooling present. For WSL/Bash:
-```bash
-source ~/ml_env/bin/activate
-```
-On Windows PowerShell (example):
-```powershell
-.\cuda_clean_env\Scripts\Activate
-```
-Prefer using repository wrapper scripts and the provided verification scripts (for example `python scripts/test_pytorch.py`) instead of relying on global installs.
 
 ---
 

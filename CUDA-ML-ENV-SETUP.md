@@ -71,6 +71,29 @@ If the `.env` file doesn't exist or is missing the token, create/update it with 
 
 This phase builds the project's specific Python environment. It can be re-run at any time to create a clean environment.
 
+**Quick Check (Recommended First Step):** If you have an existing `~/ml_env` from another compatible project, try this first:
+
+### 1. Activate and Verify Existing Environment
+
+```bash
+source ~/ml_env/bin/activate
+```
+
+Run the verification scripts to check if your existing environment is compatible:
+
+```bash
+python scripts/test_torch_cuda.py
+python scripts/test_pytorch.py
+python scripts/test_xformers.py
+python scripts/test_llama_cpp.py
+```
+
+**If all tests pass** → Your existing environment is compatible! Skip to Phase 2.
+
+**If any tests fail** → Run the full Phase 1 setup below.
+
+### Full Setup (Run if verification fails)
+
 ### 0. Clear Environment (Optional)
 
 To ensure a completely clean start, you can manually delete the existing `~/ml_env` virtual environment before running the setup script. The setup script with `--recreate` will do this automatically, but this step gives you explicit control.
@@ -306,7 +329,7 @@ bash scripts/download_model.sh
 
 ### 4. Fine-Tune the LoRA Adapter
 
-With the data forged and the base model downloaded, execute the optimized fine-tuning script. This script now includes advanced features like structured logging, automatic resume from checkpoints, pre-tokenization for faster starts, and robust error handling. **This is a long-running process (1-3 hours).**
+With the data forged and the base model downloaded, execute the optimized fine-tuning script. This script now includes advanced features like structured logging, automatic resume from checkpoints, pre-tokenization for faster starts, and robust error handling. **This is a process that takes 1-3 hours for full datasets (1000+ examples), but ~2 minutes for small test runs (8 examples).**
 
 ```bash
 python scripts/fine_tune.py
