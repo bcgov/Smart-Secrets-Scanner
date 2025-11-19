@@ -169,11 +169,11 @@ def main():
     files_config = config.get('files', {})
 
     if args.gguf:
-        gguf_path = PROJECT_ROOT / files_config.get('gguf_path', "models/gguf/Sanctuary-Qwen2-7B-v1.0-Q4_K_M.gguf")
+        gguf_path = FORGE_ROOT / files_config.get('gguf_path', "models/gguf/Sanctuary-Qwen2-7B-v1.0-Q4_K_M.gguf")
         file_paths.append(str(gguf_path))
 
     if args.modelfile:
-        modelfile_path = PROJECT_ROOT / files_config.get('modelfile_path', "Modelfile")
+        modelfile_path = FORGE_ROOT / files_config.get('modelfile_path', "Modelfile")
         file_paths.append(str(modelfile_path))
 
     if args.readme:
@@ -190,7 +190,7 @@ def main():
         file_paths.append(str(model_card_path))
 
     if args.lora:
-        lora_path = PROJECT_ROOT / files_config.get('lora_path', "forge/OPERATION_PHOENIX_FORGE/models/Sanctuary-Qwen2-7B-v1.0-adapter")
+        lora_path = FORGE_ROOT / files_config.get('lora_path', "forge/OPERATION_PHOENIX_FORGE/models/Sanctuary-Qwen2-7B-v1.0-adapter")
         file_paths.append(str(lora_path))
 
     if not file_paths:

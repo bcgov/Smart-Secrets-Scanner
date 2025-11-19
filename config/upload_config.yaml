@@ -7,7 +7,7 @@
 # --- File Paths Configuration ---
 files:
   # GGUF model file path (relative to project root)
-  gguf_path: "models/fine-tuned/gguf/smart-secrets-scanner.gguf"
+  gguf_path: "models/fine-tuned/gguf/smart-secrets-scanner-Q4_K_M.gguf"
 
   # Modelfile path (relative to project root)
   modelfile_path: "Modelfile"
