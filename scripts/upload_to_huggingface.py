@@ -35,6 +35,11 @@ logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(message)s",
     datefmt="%H:%M:%S",
 )
+
+# Ensure log directory exists
+log_dir = Path('../outputs/logs')
+log_dir.mkdir(parents=True, exist_ok=True)
+
 file_handler = logging.FileHandler('../outputs/logs/upload_to_huggingface.log')
 file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s", datefmt="%H:%M:%S"))
