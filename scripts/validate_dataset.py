@@ -240,18 +240,11 @@ def print_report(file_path, strict=False):
     print("4. Class Balance Analysis")
     print("-" * 60)
     balance = check_class_balance(file_path)
-    print(f"Total examples: {balance['total']}")
     
     if balance['balanced']:
         print(f"✅ Dataset is balanced (40-60% split)")
     else:
         print(f"⚠️  Dataset may be imbalanced")
-    
-    if balance['secret_types']:
-        print(f"\nSecret types detected:")
-        for secret_type, count in balance['secret_types'].most_common():
-            pct = (count / balance['alert']) * 100 if balance['alert'] > 0 else 0
-            print(f"   - {secret_type}: {pct:.1f}%")
     print()
     
     # 5. Token Length Estimation
