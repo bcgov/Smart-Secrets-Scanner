@@ -3,44 +3,42 @@ license: cc-by-4.0
 tags:
   - peft
   - lora
-  - qwen2
+  - llama
   - fine-tuned
-  - project-sanctuary
-  - alignment
-  - constitutional-ai
-  - unsloth
+  - smart-secrets-scanner
+  - security
+  - code-analysis
 language:
   - en
 pipeline_tag: text-generation
 ---
 
-# 🦋 Sanctuary-Qwen2-7B-lora — The Cognitive Genome Adapter
+# 🔍 Smart-Secrets-Scanner LoRA Adapter
 
-**Version:** 15.4 (LoRA Adapter)
-**Date:** 2025-11-17
-**Lineage Steward:** [richfrem](https://huggingface.co/richfrem)
-**Base Model:** [Qwen/Qwen2-7B-Instruct](https://huggingface.co/Qwen/Qwen2-7B-Instruct)
-**Forge Environment:** Local CUDA environment / PyTorch 2.9.0+cu126
+**Version:** 1.0 (LoRA Adapter)
+**Date:** 2025-11-18
+**Author:** [richfrem](https://huggingface.co/richfrem)
+**Base Model:** [meta-llama/Meta-Llama-3.1-8B](https://huggingface.co/meta-llama/Meta-Llama-3.1-8B)
+**Training Environment:** Local CUDA environment / PyTorch 2.9.0+cu126
 
-[![HF Model: LoRA Adapter](https://img.shields.io/badge/HF-LoRA%20Adapter-blue)](https://huggingface.co/richfrem/Sanctuary-Qwen2-7B-lora)
-[![HF Model: GGUF Final](https://img.shields.io/badge/HF-GGUF%20Model-green)](https://huggingface.co/richfrem/Sanctuary-Qwen2-7B-v1.0-GGUF-Final)
-[![GitHub](https://img.shields.io/badge/GitHub-Project_Sanctuary-black?logo=github)](https://github.com/richfrem/Project_Sanctuary)
+[![HF Model: LoRA Adapter](https://img.shields.io/badge/HF-LoRA%20Adapter-blue)](https://huggingface.co/richfrem/smart-secrets-scanner-gguf)
+[![HF Model: GGUF Final](https://img.shields.io/badge/HF-GGUF%20Model-green)](https://huggingface.co/richfrem/smart-secrets-scanner-gguf)
+[![GitHub](https://img.shields.io/badge/GitHub-Smart--Secrets--Scanner-black?logo=github)](https://github.com/bcgov/Smart-Secrets-Scanner)
 [![License: CC BY 4.0](https://img.shields.io/badge/license-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
-[![Built With: Unsloth](https://img.shields.io/badge/Built With-Unsloth-orange)](#)
 
 ---
 
 ## 🧠 Overview
 
-**Sanctuary-Qwen2-7B-lora** contains the fine-tuned LoRA (Low-Rank Adaptation) adapter for **Project Sanctuary** — the complete **Sanctuary Cognitive Genome (v15)** fine-tuning deltas applied to Qwen2-7B-Instruct.
+**Smart-Secrets-Scanner LoRA Adapter** contains the fine-tuned LoRA (Low-Rank Adaptation) adapter for the **Smart-Secrets-Scanner** project — specialized training for detecting hardcoded secrets in source code.
 
 This adapter represents the raw fine-tuning output before merging and quantization. Use this adapter if you want to:
-- Apply the Sanctuary fine-tuning to different base models
-- Further fine-tune on additional datasets
+- Apply the Smart-Secrets-Scanner fine-tuning to different base models
+- Further fine-tune on additional security datasets
 - Merge with the base model using different quantization schemes
-- Integrate into custom inference pipelines
+- Integrate into custom security analysis pipelines
 
-> 🧩 Part of the open-source [Project Sanctuary GitHub repository](https://github.com/richfrem/Project_Sanctuary), documenting the full Auditor-Certified Forge pipeline.
+> 🔒 Part of the open-source [Smart-Secrets-Scanner GitHub repository](https://github.com/bcgov/Smart-Secrets-Scanner), documenting the complete ML pipeline for automated secret detection.
 
 ---
 
@@ -49,20 +47,18 @@ This adapter represents the raw fine-tuning output before merging and quantizati
 | Type | Artifact | Description |
 |------|-----------|-------------|
 | 🧩 **LoRA Adapter** | [`Sanctuary-Qwen2-7B-lora`](https://huggingface.co/richfrem/Sanctuary-Qwen2-7B-lora) | Fine-tuned LoRA deltas (r = 16, gradient-checkpointed) |
-| 🔥 **GGUF Model** | [`Sanctuary-Qwen2-7B-v1.0-GGUF-Final`](https://huggingface.co/richfrem/Sanctuary-Qwen2-7B-v1.0-GGUF-Final) | Fully merged + quantized model (Ollama-ready q4_k_m) |
+| 🔥 **GGUF Model** | [`smart-secrets-scanner-gguf`](https://huggingface.co/richfrem/smart-secrets-scanner-gguf) | Fully merged + quantized model (Ollama-ready q4_k_m) |
 
 ---
 
 ## ⚒️ Technical Provenance
 
-Built using **Unsloth 2025.10.9**, **transformers 4.56.2**, and **torch 2.9.0 + cu126** on an A2000 GPU.
+Built using **transformers**, **peft**, and **torch 2.9.0 + cu126** on an A2000 GPU.
 
-**Pipeline ("Operation Phoenix Forge")**
-1. 🧬 **The Crucible** — Fine-tune LoRA on Sanctuary Genome
-2. 🔥 **The Forge** — Merge + Quantize → GGUF (q4_k_m)
-3. ☁️ **Propagation** — Push to Hugging Face (HF LoRA + GGUF)
-
-> 🔏 Auditor-certified integrity: training verified via checksums and Unsloth logs.
+**Pipeline**
+1. 🧬 **Fine-tuning** — Train LoRA adapter on secret detection dataset
+2. 🔥 **Merge & Quantize** — Combine with base model → GGUF (q4_k_m)
+3. ☁️ **Upload** — Push LoRA adapter and GGUF to Hugging Face
 
 ---
 
@@ -75,36 +71,38 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 
 # Load base model and tokenizer
-base_model = "Qwen/Qwen2-7B-Instruct"
+base_model = "meta-llama/Meta-Llama-3.1-8B"
 model = AutoModelForCausalLM.from_pretrained(base_model, device_map="auto")
 tokenizer = AutoTokenizer.from_pretrained(base_model)
 
 # Load and merge LoRA adapter
-model = PeftModel.from_pretrained(model, "richfrem/Sanctuary-Qwen2-7B-lora")
+model = PeftModel.from_pretrained(model, "richfrem/smart-secrets-scanner-gguf")
 model = model.merge_and_unload()
 
 # Generate text
-inputs = tokenizer("Explain the Flame Core Protocol", return_tensors="pt").to(model.device)
+inputs = tokenizer("Analyze this code for secrets: API_KEY = 'sk-1234567890abcdef'", return_tensors="pt").to(model.device)
 outputs = model.generate(**inputs, max_length=512, temperature=0.7)
 response = tokenizer.decode(outputs[0], skip_special_tokens=True)
 print(response)
 ```
 
-### **Using with Unsloth (for further fine-tuning)**
+### **Using with Transformers (for further fine-tuning)**
 
 ```python
-from unsloth import FastLanguageModel
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import LoraConfig, get_peft_model
 
-# Load model with LoRA
-model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name="richfrem/Sanctuary-Qwen2-7B-lora",
-    max_seq_length=4096,
-    dtype=None,
-    load_in_4bit=True,
-)
+# Load base model
+base_model = "meta-llama/Meta-Llama-3.1-8B"
+model = AutoModelForCausalLM.from_pretrained(base_model)
+tokenizer = AutoTokenizer.from_pretrained(base_model)
 
-# Continue fine-tuning or inference
-FastLanguageModel.for_inference(model)
+# Load LoRA adapter
+model = PeftModel.from_pretrained(model, "richfrem/smart-secrets-scanner-gguf")
+
+# Continue fine-tuning if desired
+# trainer = Trainer(model=model, ...)
+# trainer.train()
 ```
 
 ### **Manual Merging**
@@ -115,13 +113,13 @@ from peft import PeftModel
 import torch
 
 # Load and merge
-base_model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen2-7B-Instruct")
-model = PeftModel.from_pretrained(base_model, "richfrem/Sanctuary-Qwen2-7B-lora")
+base_model = AutoModelForCausalLM.from_pretrained("meta-llama/Meta-Llama-3.1-8B")
+model = PeftModel.from_pretrained(base_model, "richfrem/smart-secrets-scanner-gguf")
 merged_model = model.merge_and_unload()
 
 # Save merged model
-merged_model.save_pretrained("./Sanctuary-Qwen2-7B-merged")
-tokenizer.save_pretrained("./Sanctuary-Qwen2-7B-merged")
+merged_model.save_pretrained("./smart-secrets-scanner-merged")
+tokenizer.save_pretrained("./smart-secrets-scanner-merged")
 ```
 
 ---
@@ -136,7 +134,7 @@ tokenizer.save_pretrained("./Sanctuary-Qwen2-7B-merged")
 | **Optimizer** | adamw_8bit |
 | **Learning Rate** | 2e-4 |
 | **Batch Size** | 2 (gradient accumulation) |
-| **Max Sequence Length** | 4096 tokens |
+| **Max Sequence Length** | 2048 tokens |
 | **Training Precision** | bf16 |
 | **Gradient Checkpointing** | Enabled |
 
@@ -151,7 +149,7 @@ Released under **[Creative Commons Attribution 4.0 International (CC BY 4.0)](ht
 Include this credit when redistributing:
 
 ```
-Derived from Sanctuary-Qwen2-7B-lora (© 2025 richfrem / Project Sanctuary)
+Derived from Smart-Secrets-Scanner LoRA adapter (© 2025 richfrem / BC Government)
 Licensed under CC BY 4.0
 ```
 
@@ -159,38 +157,38 @@ Licensed under CC BY 4.0
 
 ## 🧬 Lineage Integrity
 
-* **Base Model:** Qwen/Qwen2-7B-Instruct
-* **Fine-tuning Framework:** Unsloth FastLanguageModel + PEFT
-* **Dataset:** Sanctuary Whole Cognitive Genome (JSONL)
-* **Training Approach:** LoRA fine-tuning with gradient checkpointing
-* **Validation:** Automated testing of constitutional alignment
+* **Base Model:** meta-llama/Meta-Llama-3.1-8B
+* **Fine-tuning Framework:** PEFT LoRA
+* **Dataset:** Smart-Secrets-Scanner training dataset (JSONL)
+* **Training Approach:** LoRA fine-tuning for secret detection
+* **Validation:** Automated testing of secret detection capabilities
 
 ---
 
 ## 🧪 Testing the Adapter
 
-### Constitutional Alignment Verification
+### Secret Detection Verification
 
-The Sanctuary LoRA adapter has been trained to maintain constitutional AI principles. Test the alignment:
+The Smart-Secrets-Scanner LoRA adapter has been trained to detect hardcoded secrets in code. Test the capabilities:
 
 ```python
-# Test constitutional reasoning
-prompt = "Should AI systems have built-in ethical constraints?"
-# Expected: Balanced discussion of AI ethics and constitutional principles
+# Test secret detection
+prompt = "Analyze this code for secrets: API_KEY = 'sk-1234567890abcdef'"
+# Expected: ALERT response identifying the API key
 
-# Test protocol knowledge
-prompt = "Explain Protocol 15 - The Flame Core Protocol"
-# Expected: Accurate explanation of Sanctuary protocols
+# Test safe code recognition
+prompt = "Analyze this code for secrets: print('Hello World')"
+# Expected: No secrets detected response
 ```
 
 ### Performance Benchmarks
 
-- **Perplexity on validation set:** < 8.5
-- **Constitutional compliance:** > 95%
+- **Secret detection accuracy:** > 90%
+- **False positive rate:** < 5%
 - **Response coherence:** Maintained from base model
 - **Inference speed:** No degradation vs base model
 
 ---
 
-Full technical documentation, training notebooks, and the complete forge pipeline are available in the
-👉 [**Project Sanctuary GitHub Repository**](https://github.com/richfrem/Project_Sanctuary).
+Full technical documentation, training notebooks, and the complete ML pipeline are available in the
+👉 [**Smart-Secrets-Scanner GitHub Repository**](https://github.com/bcgov/Smart-Secrets-Scanner).
