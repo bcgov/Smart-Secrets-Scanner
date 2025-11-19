@@ -35,13 +35,13 @@ logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(message)s",
     datefmt="%H:%M:%S",
 )
-file_handler = logging.FileHandler('../logs/upload_to_huggingface.log')
+file_handler = logging.FileHandler('../outputs/logs/upload_to_huggingface.log')
 file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s", datefmt="%H:%M:%S"))
 logging.getLogger().addHandler(file_handler)
 
 log = logging.getLogger(__name__)
-log.info("Upload to Hugging Face script started - logging to console and ../logs/upload_to_huggingface.log")
+log.info("Upload to Hugging Face script started - logging to console and ../outputs/logs/upload_to_huggingface.log")
 
 atexit.register(logging.shutdown)
 
