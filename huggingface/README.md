@@ -4,6 +4,7 @@ tags:
   - gguf
   - ollama
   - llama
+  - llama-3.1
   - fine-tuned
   - smart-secrets-scanner
   - security
@@ -11,7 +12,6 @@ tags:
   - secret-detection
   - llama.cpp
   - q4_k_m
-  - alpaca
 language:
   - en
 pipeline_tag: text-generation
@@ -19,8 +19,8 @@ pipeline_tag: text-generation
 
 # 🔒 Smart-Secrets-Scanner — Code Security Analysis Model (GGUF Edition)
 
-**Version:** 1.1 (Prompt Drift Fix)
-**Date:** 2025-11-18
+**Version:** 1.2 (Dataset Expansion & Llama 3.1 Format)
+**Date:** 2024-10-18
 **Developer:** [richfrem](https://huggingface.co/richfrem)
 **Base Model:** [meta-llama/Llama-3.1-8B-Instruct](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct)
 **Training Environment:** Local CUDA environment / PyTorch 2.9.0+cu126
@@ -39,11 +39,11 @@ pipeline_tag: text-generation
 
 > 🔒 Part of the open-source [Smart-Secrets-Scanner GitHub repository](https://github.com/bcgov/Smart-Secrets-Scanner), providing comprehensive code security analysis tools.
 
-### ✨ Key Features (v1.1 Update)
-- **Fixed Prompt Drift**: Resolved hallucinations caused by template mismatches between training and inference
-- **Generic Alpaca Compatibility**: Works with standard Alpaca chat templates - no custom workarounds needed
+### ✨ Key Features (v1.2 Update)
+- **Expanded Dataset**: Trained on 536 curated examples for improved accuracy and coverage
+- **Llama 3.1 Instruct Format**: Uses official Llama 3.1 chat templates for consistent training and inference
 - **Flexible Input Handling**: Accepts any code analysis request without requiring specific instruction text
-- **Standard Template Support**: Compatible with Ollama's default Llama templates and other Alpaca-based interfaces
+- **Standard Template Support**: Compatible with Ollama's default Llama 3.1 templates and other Instruct-based interfaces
 
 ---
 
@@ -53,7 +53,7 @@ pipeline_tag: text-generation
 |------|-----------|-------------|
 | 🧩 **LoRA Adapter** | [`smart-secrets-scanner-lora`](https://huggingface.co/richfrem/smart-secrets-scanner-lora) | Fine-tuned LoRA deltas for secret detection |
 | 🔥 **GGUF Model** | [`smart-secrets-scanner-gguf`](https://huggingface.co/richfrem/smart-secrets-scanner-gguf) | Fully merged + quantized model (Ollama-ready q4_k_m) |
-| ⚙️ **Config Files** | [system](https://huggingface.co/richfrem/smart-secrets-scanner-gguf/blob/main/system), [template](https://huggingface.co/richfrem/smart-secrets-scanner-gguf/blob/main/template), [params.json](https://huggingface.co/richfrem/smart-secrets-scanner-gguf/blob/main/params.json) | Individual files for Ollama config override (Standard Alpaca) |
+| ⚙️ **Config Files** | [system](https://huggingface.co/richfrem/smart-secrets-scanner-gguf/blob/main/system), [template](https://huggingface.co/richfrem/smart-secrets-scanner-gguf/blob/main/template), [params.json](https://huggingface.co/richfrem/smart-secrets-scanner-gguf/blob/main/params.json) | Individual files for Ollama config override (Llama 3.1 Instruct) |
 | 📜 **Ollama Modelfile** | [Modelfile](https://huggingface.co/richfrem/smart-secrets-scanner-gguf/blob/main/Modelfile) | Defines final runtime parameters for local deployment |
 
 ---
@@ -62,14 +62,14 @@ pipeline_tag: text-generation
 
 Built using **transformers 4.56.2**, **torch 2.9.0 + cu126**, **PEFT**, **TRL**, and **llama.cpp (GGUF converter)** on CUDA-enabled hardware.
 
-**Training Improvements (v1.1):**
-- **Generic Alpaca Formatting**: Updated `formatting_prompts_func` to use standard Alpaca preamble without hardcoded instructions
-- **Prompt Drift Resolution**: Eliminated template mismatches that caused hallucinations and run-on text
-- **Flexible Instruction Handling**: Model now accepts any code analysis request via dataset-driven instructions
+**Training Improvements (v1.2):**
+- **Llama 3.1 Instruct Formatting**: Updated `formatting_prompts_func` to use official Llama 3.1 chat templates
+- **Dataset Expansion**: Increased training examples to 536 for better generalization and accuracy
+- **Template Consistency**: Eliminated prompt drift through standardized Llama 3.1 format across training and inference
 
 **Pipeline**
-1. 📊 **Data Preparation** — Curate secret detection dataset with flexible instruction format
-2. 🎯 **Fine-tuning** — LoRA fine-tuning with generic Alpaca formatting (no hardcoded prompts)
+1. 📊 **Data Preparation** — Curate secret detection dataset (536 examples) with Llama 3.1 instruction format
+2. 🎯 **Fine-tuning** — LoRA fine-tuning with Llama 3.1 chat formatting for template consistency
 3. 🔄 **Model Merge** — Combine LoRA adapter with base model
 4. 📦 **Quantization** — Convert to GGUF (q4_k_m) format
 5. ☁️ **Distribution** — Upload to Hugging Face for deployment
@@ -90,19 +90,19 @@ ollama run smart-secrets-scanner
 ollama run hf.co/richfrem/smart-secrets-scanner-gguf:Q4_K_M
 ```
 
-### **Option C — Standard Alpaca Template (Recommended for v1.1)**
+### **Option C — Llama 3.1 Instruct Template (Recommended for v1.2)**
 
-This model now works with **any standard Alpaca chat template** - no custom Modelfile required!
+This model uses the **official Llama 3.1 Instruct chat template** for optimal performance.
 
 ```bash
-# Works with Ollama's default Llama template
+# Works with Ollama's default Llama 3.1 template
 ollama run hf.co/richfrem/smart-secrets-scanner-gguf:Q4_K_M
 
-# Or use with LM Studio, llama.cpp, or any Alpaca-compatible interface
+# Or use with LM Studio, llama.cpp, or any Llama 3.1-compatible interface
 # Just provide your code analysis request directly
 ```
 
-> The model uses a **generic Alpaca system prompt** that accepts any code analysis instruction, eliminating the need for specific prompt engineering.
+> The model uses the **official Llama 3.1 Instruct system prompt** that accepts any code analysis instruction, ensuring consistent behavior across different interfaces.
 
 ---
 
@@ -115,7 +115,7 @@ ollama run hf.co/richfrem/smart-secrets-scanner-gguf:Q4_K_M
 | **Target Environment**     | Code repositories, CI/CD pipelines, security audits                       |
 | **Context Length**         | 4096 tokens                                                               |
 | **Quantization**           | q4_k_m (optimized for speed and accuracy)                                 |
-| **Template Compatibility** | Standard Alpaca chat templates (no custom workarounds needed)             |
+| **Template Compatibility** | Standard Llama 3.1 Instruct chat templates (official format)             |
 
 ---
 
@@ -161,11 +161,11 @@ Derived from Smart-Secrets-Scanner (© 2025 richfrem / BC Government)Source: htt
 
 * **Base Model:** meta-llama/Llama-3.1-8B-Instruct
 * **Fine-tuning Framework:** PEFT + TRL (LoRA)
-* **Dataset:** Smart-Secrets-Scanner Dataset (JSONL)
-* **Formatting:** Generic Alpaca (v1.1) - No hardcoded instructions, flexible prompt handling
+* **Dataset:** Smart-Secrets-Scanner Dataset (536 examples, JSONL)
+* **Formatting:** Llama 3.1 Instruct (v1.2) - Official chat templates for consistent training/inference
 * **Quantization:** GGUF (q4_k_m)
 * **Architecture:** Decoder-only transformer
-* **Key Fix (v1.1):** Resolved prompt drift by using standard Alpaca preamble without specific instruction injection
+* **Key Improvements (v1.2):** Dataset expansion to 536 examples, Llama 3.1 format standardization
 
 ---
 
@@ -173,7 +173,7 @@ Derived from Smart-Secrets-Scanner (© 2025 richfrem / BC Government)Source: htt
 
 ### Security Analysis Examples
 
-The Smart-Secrets-Scanner model analyzes code snippets for potential security risks. **With v1.1, you can use any natural language instruction** - the model is no longer restricted to specific prompt formats.
+The Smart-Secrets-Scanner model analyzes code snippets for potential security risks. **With v1.2, the model uses Llama 3.1 Instruct format** for natural language instructions.
 
 **Example 1 - API Key Detection (Flexible Prompt):**
 ```bash
