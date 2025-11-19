@@ -61,7 +61,9 @@ const alwaysExcludeFiles = [
     'Thumbs.db',
     'Desktop.ini',
     // Output files
-    'smart_secrets_scanner_snapshot.txt'
+    'smart_secrets_scanner_snapshot.txt',
+    // GGUF model files (large binary files)
+    '**/*.gguf'
 ];
 
 // Allowed file extensions for content inclusion

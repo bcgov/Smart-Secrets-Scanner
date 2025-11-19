@@ -1,62 +1,31 @@
 # ==============================================================================
-# Ollama Modelfile – smart-secrets-scanner (smart-secrets-scanner v1.1)
-# Generated: 2025-11-18 20:22:16 UTC
-# GGUF: smart-secrets-scanner-Q4_K_M.gguf (4 GB)
+# Ollama Modelfile – smart-secrets-scanner
+# Generated: 2025-11-19 15:05:15 UTC
 # ==============================================================================
 
-FROM /mnt/c/Users/RICHFREM/source/repos/Smart-Secrets-Scanner/models/fine-tuned/gguf/smart-secrets-scanner-Q4_K_M.gguf
+FROM ./huggingface/smart-secrets-scanner-Q4_K_M.gguf
 
-SYSTEM """
-You are Smart-Secrets-Scanner, a specialized AI model trained to detect accidental hardcoded secrets in source code.
+# Standard Alpaca Preamble
+SYSTEM """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request."""
 
-Your core mission is to identify security vulnerabilities such as:
-- API keys (AWS, Stripe, OpenAI, GitHub, etc.)
-- Authentication tokens (JWT, Bearer tokens, OAuth tokens)
-- Database credentials (usernames, passwords, connection strings)
-- Private keys and certificates
-- Passwords and other sensitive information
+# Standard Alpaca Template
+TEMPLATE """{{ if .System }}{{ .System }}
 
-You are capable of two distinct interaction modes:
+{{ end }}### Instruction:
+{{ .Prompt }}
 
-1. CONVERSATIONAL MODE (default)
-   • Respond naturally and helpfully to questions about code security
-   • Provide guidance on secure coding practices
-   • Explain security concepts and best practices
-   • Answer questions about secret detection and prevention
+### Input:
 
-2. ANALYSIS MODE (when presented with code)
-   • When given code snippets, analyze them for hardcoded secrets
-   • Respond with "ALERT: [type of secret] detected" when secrets are found
-   • Explain the security risk and recommend secure alternatives
-   • Respond with "No secrets detected" for safe code patterns
-
-Always prioritize security awareness and help developers write safer code.
-Be precise, minimize false positives, and provide actionable security advice.
+### Response:
 """
 
-TEMPLATE """{{ if .System }}<|im_start|>system
-{{ .System }}<|im_end|>
-{{ end }}{{ if .Prompt }}<|im_start|>user
-{{ .Prompt }}<|im_end|>
-<|im_start|>assistant
-{{ else }}<|im_start|>user
-{{ .Prompt }}<|im_end|>
-<|im_start|>assistant
-{{ end }}"""
+# Standard Alpaca Stop Tokens
+PARAMETER stop "### Instruction:"
+PARAMETER stop "### Input:"
+PARAMETER stop "### Response:"
+PARAMETER stop "<|end_of_text|>"
 
-PARAMETER stop "<|im_end|>"
-PARAMETER stop "<|im_start|>"
-
-# Sovereign-grade generation parameters (November 2025 best practice)
-PARAMETER temperature 0.67
-PARAMETER top_p 0.95
-PARAMETER top_k 40
-PARAMETER repeat_penalty 1.10
-PARAMETER num_ctx 32768
-PARAMETER num_predict 4096
-PARAMETER num_keep 4
-
-# Mirostat v1 (for Ollama versions before 0.3.15+ - no v2 support detected)
-PARAMETER mirostat 2
-PARAMETER mirostat_tau 5.0
-PARAMETER mirostat_eta 0.1
+PARAMETER temperature 0.1
+PARAMETER top_p 0.9
+PARAMETER num_ctx 8192
+PARAMETER num_predict 256

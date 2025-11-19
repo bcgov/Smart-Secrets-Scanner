@@ -1,0 +1,12 @@
+{
+  "temperature": 0.1,
+  "top_p": 0.9,
+  "num_ctx": 8192,
+  "num_predict": 256,
+  "stop": [
+    "### Instruction:",
+    "### Input:",
+    "### Response:",
+    "<|end_of_text|>"
+  ]
+}

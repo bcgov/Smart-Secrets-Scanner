@@ -55,6 +55,10 @@ models/fine-tuned/**/*.bin
 models/fine-tuned/**/*.safetensors
 models/fine-tuned/**/
 models/gguf/**/*.gguf
+**/*.gguf  # Ignore all GGUF files including in huggingface/
+huggingface/*.gguf  # Specifically ignore GGUF files in huggingface directory
+huggingface/downloaded_models/  # Ignore downloaded model files for local testing
+downloaded_models/  # Ignore downloaded models in root directory
 outputs/checkpoints/**/*.bin
 outputs/checkpoints/**/*.safetensors
 outputs/checkpoints/**/
@@ -71,13 +75,8 @@ offload/
 !models/gguf/.gitkeep
 !outputs/checkpoints/.gitkeep
 
-# Data files (potentially sensitive or large)
-data/raw/**/*.csv
-data/raw/**/*.txt
-data/raw/**/*.json
-data/processed/**/*.jsonl
-data/evaluation/**/*.jsonl
-outputs/evaluation/
+# Data files (educational training examples - small and important to share)
+# Removed from ignore list - these are small educational examples
 
 # Keep README files
 !data/**/README.md

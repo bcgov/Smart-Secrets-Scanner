@@ -340,7 +340,7 @@ The final LoRA adapter will be saved to `models/fine-tuned/smart-secrets-scanner
 ```bash
 ls -la models/fine-tuned/smart-secrets-scanner-lora/
 ```
-Ensure `adapter_model.safetensors` and `adapter_config.json` are present. For a quick integrity test, run:
+Ensure `adapter_model.safetensors` and `adapter_config.json` are present. For a quick integrity test, run: (5 mins)
 ```bash
 python scripts/inference.py --input "Test prompt"
 ```
@@ -348,7 +348,7 @@ If it loads and generates output without errors, the adapter is valid.
 
 ### 5. Merge the Adapter
 
-Combine the trained adapter with the base model to create a full, standalone fine-tuned model.
+Combine the trained adapter with the base model to create a full, standalone fine-tuned model. (about 5 mins)
 
 ```bash
 python scripts/merge_adapter.py --skip-sanity
@@ -410,7 +410,6 @@ ollama create smart-secrets-scanner -f Modelfile
 ```bash
 ollama run smart-secrets-scanner
 ```
-
 ---
 
 **2d. Test Both Interaction Modes:**
@@ -470,10 +469,13 @@ python scripts/inference.py --model models/fine-tuned/gguf/smart-secrets-scanner
 
 ### 4. Upload to Hugging Face
 
-Run the automated upload script to upload the GGUF model, Modelfile, and README to your Hugging Face repository:
+Run the automated upload script to upload the GGUF model, system, template, params.json, and README to your Hugging Face repository:
 
 ```bash
-python scripts/upload_to_huggingface.py --repo yourusername/your-repo-name --gguf --modelfile --readme
+#python scripts/upload_to_huggingface.py --repo yourusername/your-repo-name --gguf --system --template --params --readme
+
+python scripts/upload_to_huggingface.py --repo richfrem/smart-secrets-scanner-gguf --gguf --system --template --params --readme
+
 ```
 
 Replace `yourusername/your-repo-name` with your actual Hugging Face repository ID (e.g., `richfrem/Smart-Secrets-Scanner-Model`).
@@ -485,19 +487,68 @@ The script will:
 
 After upload, your model will be available at: https://huggingface.co/yourusername/your-repo-name
 
+**Selective Upload Examples:**
+
+```bash
+# Upload README only
+python scripts/upload_to_huggingface.py --repo richfrem/smart-secrets-scanner-gguf --readme
+
+# Upload GGUF model only
+python scripts/upload_to_huggingface.py --repo richfrem/smart-secrets-scanner-gguf --gguf
+
+# Upload merged model only
+python scripts/upload_to_huggingface.py --repo richfrem/smart-secrets-scanner-gguf --merged
+
+# Upload config files only (system, template, params.json)
+python scripts/upload_to_huggingface.py --repo richfrem/smart-secrets-scanner-gguf --system --template --params
+
+# Upload all (GGUF + configs + README)
+python scripts/upload_to_huggingface.py --repo richfrem/smart-secrets-scanner-gguf --gguf --system --template --params --readme
+```
+
 ---
 
 ### 5. download and test hugging face model
 
-**5a. Download from Hugging Face:**
-Download the model files from Hugging Face for verification.
+**5a. Direct Run from Hugging Face (Recommended):**
+Ollama can run the model directly from Hugging Face without downloading it first. This is the most convenient method:
+
+```bash
+ollama run hf.co/richfrem/smart-secrets-scanner-gguf:Q4_K_M
+```
+
+This command will automatically download and run the model from Hugging Face on-demand.
+
+**5b. Download from Hugging Face:**
+If you prefer to download the model files for local verification:
+
+```bash
+python -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='richfrem/smart-secrets-scanner-gguf', local_dir='huggingface/downloaded_models')"
+```
 
 After downloading the model from Hugging Face, test it locally in Ollama to verify the upload/download process didn't corrupt the model and that inference works correctly. Compare performance with the local tests in Section 3 to ensure consistency.
 
-**5b. Create Modelfile for Downloaded Model:**
-Create a new `Modelfile` (e.g., `Modelfile_HF`) pointing to the downloaded GGUF file:
+**Note:** The repository includes separate configuration files (system, template, params.json) that Ollama automatically detects and applies when running `ollama run hf.co/richfrem/smart-secrets-scanner-gguf:Q4_K_M`. For local testing, you can create a Modelfile from these files or use them directly.
+
+
+
+**5c. (Optional) Create Local Modelfile for Downloaded Model:**
+If you prefer to create a local Ollama model from the downloaded files instead of using the direct HF run, create a Modelfile that references the downloaded system, template, and params.json:
+
+```bash
+# Create a local Modelfile
+cat > Modelfile_HF << 'EOF'
+FROM ./huggingface/downloaded_models/smart-secrets-scanner-Q4_K_M.gguf
+
+SYSTEM "$(cat huggingface/downloaded_models/system)"
+
+TEMPLATE "$(cat huggingface/downloaded_models/template)"
+
+PARAMETER $(jq -r 'to_entries[] | "PARAMETER \(.key) \(.value)"' huggingface/downloaded_models/params.json | tr '\n' '\n')
+EOF
 ```
-FROM ./downloaded_models/smart-secrets-scanner-Q4_K_M.gguf
+```
+FROM ./huggingface/downloaded_models/smart-secrets-scanner-Q4_K_M.gguf
 
 TEMPLATE """{{ if .System }}<|im_start|>system
 {{ .System }}<|im_end|>
@@ -524,19 +575,11 @@ PARAMETER stop "<|im_start|>"
 PARAMETER stop "<|im_end|>"
 ```
 
-**5c. Import to Ollama:**
+**5d. (Optional) Import Local Model to Ollama:**
 ```bash
 ollama create smart-secrets-scanner-HF -f Modelfile_HF
+ollama run smart-secrets-scanner-HF
 ```
-
-**5d. Direct Run from Hugging Face (Recommended):**
-Ollama can run the model directly from Hugging Face without downloading it first. This is the most convenient method:
-
-```bash
-ollama run hf.co/richfrem/Smart-Secrets-Scanner-Model:Q4_K_M
-```
-
-This command will automatically download and run the model from Hugging Face on-demand.
 
 **5e. Test Inference:**
 Then, provide test prompts to verify the model responds correctly, such as: "Analyze this code for secrets: API_KEY = 'sk-1234567890abcdef'".

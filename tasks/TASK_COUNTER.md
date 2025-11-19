@@ -1,6 +1,6 @@
 # Task Counter
 
-Current task number: **78**
+Current task number: **79**
 
 ## Instructions
 
@@ -23,6 +23,7 @@ When creating a new task:
  - 55: Compare local GGUF outputs vs hosted model (backlog)
  - 56: Add Modelfile troubleshooting section to EXECUTION_GUIDE.md (backlog)
  - 57: Create tokenizer/token-id comparison script (backlog)
+ - 79: Test GGUF model inference with Python script (done)
 
 
 ## Task Status Folders
