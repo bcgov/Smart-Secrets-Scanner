@@ -205,7 +205,7 @@ def print_report(file_path, strict=False):
         if len(syntax_errors) > 10:
             print(f"   ... and {len(syntax_errors) - 10} more")
     else:
-        print(f"✅ All {line_count} lines are valid JSON")
+        print(f"✅ All lines are valid JSON")
     print()
     
     # 2. Schema Validation
@@ -227,11 +227,11 @@ def print_report(file_path, strict=False):
     print("-" * 60)
     duplicates = check_duplicates(file_path)
     if duplicates:
-        print(f"⚠️  Found {len(duplicates)} duplicate input(s):")
+        print(f"⚠️  Found duplicate input(s)")
         for dup in duplicates[:5]:
             print(f"   - {dup}")
         if len(duplicates) > 5:
-            print(f"   ... and {len(duplicates) - 5} more")
+            print(f"   ... and more")
     else:
         print(f"✅ No duplicate inputs found")
     print()
@@ -252,12 +252,8 @@ def print_report(file_path, strict=False):
     print("-" * 60)
     token_stats = estimate_token_lengths(file_path)
     if token_stats:
-        print(f"Min tokens:  {token_stats['min']}")
-        print(f"Max tokens:  {token_stats['max']}")
-        print(f"Avg tokens:  {token_stats['avg']:.1f}")
-        
         if token_stats['over_2048'] > 0:
-            print(f"⚠️  {token_stats['over_2048']} example(s) may exceed 2048 tokens")
+            print(f"⚠️  Some examples may exceed 2048 tokens")
         else:
             print(f"✅ All examples within 2048 token limit")
     print()
