@@ -71,7 +71,7 @@ def load_config():
         log.info(f"Loaded config from {config_path}")
         return config
 def load_environment():
-    env_path = PROJECT_ROOT / ".env"
+    env_path = FORGE_ROOT / ".env"
     if env_path.exists():
         load_dotenv(env_path)
         log.info(f"Loaded environment from {env_path}")
