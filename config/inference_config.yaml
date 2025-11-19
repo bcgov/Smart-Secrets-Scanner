@@ -1,7 +1,7 @@
 model:
-  base_path: "forge/OPERATION_PHOENIX_FORGE/models/base/Qwen/Qwen2-7B-Instruct"
-  adapter_path: "models/Sanctuary-Qwen2-7B-v1.0-adapter"
-  merged_path: "outputs/merged/Sanctuary-Qwen2-7B-v1.0-merged"
+  base_path: "models/base/Meta-Llama-3.1-8B"
+  adapter_path: "models/fine-tuned/smart-secrets-scanner-lora"
+  merged_path: "outputs/merged/smart-secrets-scanner-merged"
 
 quantization:
   load_in_4bit: true
@@ -10,7 +10,22 @@ quantization:
   bnb_4bit_quant_type: "nf4"
 
 generation:
-  max_new_tokens: 512
-  temperature: 0.7
-  top_p: 0.9
-  do_sample: true
+  max_new_tokens: 150
+  temperature: 0.1
+  do_sample: false
+  use_cache: true
+  repetition_penalty: 1.1
+  early_stopping: true
+
+system_prompt: |
+  You are a specialized AI security scanner designed to detect secrets and sensitive credentials in code. Your task is to analyze code snippets and identify any hardcoded secrets, API keys, passwords, tokens, or other sensitive information that should not be committed to version control.
+
+  Guidelines:
+  - Look for patterns like API keys, database passwords, private keys, tokens, etc.
+  - Check for common naming patterns (password, secret, key, token, etc.)
+  - Identify environment variables that might contain sensitive data
+  - Flag any hardcoded credentials or secrets
+  - Be precise and avoid false positives
+  - If no secrets found, clearly state "No secrets detected"
+
+  Respond with a clear, concise analysis of any security issues found.

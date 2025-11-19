@@ -357,7 +357,7 @@ The merged model will be saved to `models/merged/smart-secrets-scanner/`.
 
 **Verification:** After completion, verify the merged model by testing it:
 ```bash
-python scripts/inference.py --model-type merged --input "Test prompt"
+python scripts/inference.py --model outputs/merged/smart-secrets-scanner --input "Test prompt"
 ```
 If it loads and generates output without errors, the merged model is valid and ready for GGUF conversion.
 
@@ -382,11 +382,16 @@ python scripts/convert_to_gguf.py --quant Q4_K_M --force
 ```
 The final quantized `.gguf` file will be saved to `models/fine-tuned/gguf/smart-secrets-scanner.gguf`.
 
+next test the gguf model with the following
+```bash
+python scripts/inference.py --model models/fine-tuned/gguf/smart-secrets-scanner-Q4_K_M.gguf --input "Test prompt"
+```
+
 ---
 
 ### 2. Test gguf file locally with ollama
 
-**2a. Generate Modelfile Automatically:**
+**2a. Generate Modelfile:**
 
 Run the bulletproof Modelfile generator script:
 
@@ -449,15 +454,17 @@ Run a full evaluation against a held-out test set to get objective performance m
 pip install evaluate rouge-score
 ```
 
+
 ```bash
-python scripts/evaluate.py
+python scripts/evaluate.py --load-in-4bit --test-data data/processed/smart-secrets-scanner-val.jsonl --max-examples 10
 ```
 
-**3c. Real body of knowledge (BOK) test crucial**
-Test with actual code examples containing secrets:
+**3c. Test GGUF Model Locally:**
+After creating the GGUF file, test it directly:
 ```bash
-python scripts/inference.py --model-type merged --file path/to/test_code_with_secrets.py
+python scripts/inference.py --model models/fine-tuned/gguf/smart-secrets-scanner-Q4_K_M.gguf --input "Test prompt"
 ```
+
 
 ---
 

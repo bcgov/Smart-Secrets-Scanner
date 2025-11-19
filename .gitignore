@@ -40,6 +40,8 @@ env/
 *.ipynb_checkpoints
 
 # Model files (too large for Git)
+models/
+outputs/
 models/base/**/*.bin
 models/base/**/*.safetensors
 models/base/**/*.pt

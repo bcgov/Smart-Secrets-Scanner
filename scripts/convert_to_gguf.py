@@ -306,3 +306,7 @@ def main():
     log.info("3. ollama run smart-secrets-scanner")
 
     log.info("=== GGUF Conversion Complete ===")
+
+
+if __name__ == "__main__":
+    main()

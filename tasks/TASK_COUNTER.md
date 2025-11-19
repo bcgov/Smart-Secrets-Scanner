@@ -1,6 +1,6 @@
 # Task Counter
 
-Current task number: **75**
+Current task number: **78**
 
 ## Instructions
 
