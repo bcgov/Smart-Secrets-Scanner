@@ -241,8 +241,6 @@ def print_report(file_path, strict=False):
     print("-" * 60)
     balance = check_class_balance(file_path)
     print(f"Total examples: {balance['total']}")
-    print(f"ALERT examples: {balance['alert_pct']:.1f}%")
-    print(f"Safe examples:  {balance['safe_pct']:.1f}%")
     
     if balance['balanced']:
         print(f"✅ Dataset is balanced (40-60% split)")
