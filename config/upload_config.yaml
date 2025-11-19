@@ -18,6 +18,9 @@ files:
   # LoRA-specific README file path (relative to project root)
   readme_lora_path: "huggingface/README_LORA.md"
 
+  # LoRA adapter directory path (relative to project root)
+  lora_path: "models/fine-tuned/smart-secrets-scanner-lora"
+
   # Model card YAML file path (relative to project root)
   model_card_path: "huggingface/model_card.yaml"
 
