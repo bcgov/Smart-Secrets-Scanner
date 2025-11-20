@@ -23,7 +23,7 @@ model:
 # --- Dataset Configuration ---
 data:
   # Path to your training data file, relative to the project root.
-  train_file: "data/processed/smart-secrets-scanner-dataset.jsonl"
+  train_file: "data/processed/smart-secrets-scanner-train-v2.jsonl"
   # It's highly recommended to also have a validation set to monitor for overfitting.
   val_file: "data/processed/smart-secrets-scanner-val.jsonl" # Will be created automatically if missing
 

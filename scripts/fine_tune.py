@@ -159,7 +159,7 @@ def formatting_prompts_func(example):
         f"\n\n{example['output']}<|eot_id|>"
     )
 
-    return text
+    return {'text': text}
 
 def main():
     """Main function to execute the fine-tuning process."""
@@ -237,7 +237,7 @@ def main():
     if val_file_path:
         logger.info("Loading eval dataset from: %s", val_file_path)
         eval_dataset = load_dataset("json", data_files=str(val_file_path), split="train")
-        eval_dataset = eval_dataset.map(formatting_prompts_func, batched=True)
+        eval_dataset = eval_dataset.map(formatting_prompts_func)
         eval_tokenized = tokenize_and_cache(eval_dataset, tokenizer, config['max_seq_length'])
         logger.info("Eval dataset loaded and tokenized. Total examples: %d", len(eval_dataset))
 

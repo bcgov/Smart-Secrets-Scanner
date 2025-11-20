@@ -2,4 +2,5 @@ model:
   merged_path: "outputs/merged/smart-secrets-scanner"
   gguf_output_dir: "models/fine-tuned/gguf"
   gguf_model_name: "smart-secrets-scanner"
-  ollama_model_name: "smart-secrets-scanner"
+  ollama_model_name: "ai-secret-scanner"      # pretty name with hyphen
+  hf_model_name: "richfrem/ai-secret-scanner-q4km"  # optional full HF name

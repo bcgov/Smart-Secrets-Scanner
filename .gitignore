@@ -42,28 +42,13 @@ env/
 # Model files (too large for Git)
 models/
 outputs/
-models/base/**/*.bin
-models/base/**/*.safetensors
-models/base/**/*.pt
-models/base/**/*.pth
-models/base/.locks/
-models/base/**/.locks/
-models/base/**/blobs/
-models/base/**/snapshots/
-models/base/**/.no_exist/
-models/fine-tuned/**/*.bin
-models/fine-tuned/**/*.safetensors
-models/fine-tuned/**/
-models/gguf/**/*.gguf
-**/*.gguf  # Ignore all GGUF files including in huggingface/
-huggingface/*.gguf  # Specifically ignore GGUF files in huggingface directory
-huggingface/downloaded_models/  # Ignore downloaded model files for local testing
-downloaded_models/  # Ignore downloaded models in root directory
-outputs/checkpoints/**/*.bin
-outputs/checkpoints/**/*.safetensors
-outputs/checkpoints/**/
-models/merged/**/*.bin
-models/merged/**/*.safetensors
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.gguf
+huggingface/downloaded_models/
+downloaded_models/
 
 # Offload directory for model memory management
 offload/

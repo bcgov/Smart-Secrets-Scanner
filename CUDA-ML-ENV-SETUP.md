@@ -16,6 +16,11 @@ These steps only need to be performed once per machine.
 *   **Install NVIDIA Drivers:** You must have the latest NVIDIA drivers for Windows that support WSL2.
 *   **Verify GPU Access:** Open an Ubuntu terminal and run `nvidia-smi`. You must see your GPU details before proceeding.
 
+*   **Ollama install in wsl not windows:**
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
 
 ### 2. Verify Repository Structure
 
@@ -348,16 +353,19 @@ If it loads and generates output without errors, the adapter is valid.
 
 ### 5. Merge the Adapter
 
-Combine the trained adapter with the base model to create a full, standalone fine-tuned model. (about 5 mins)
+Combine the trained adapter with the base model to create a full, standalone fine-tuned model. (about 10 mins)
 
 ```bash
 python scripts/merge_adapter.py --skip-sanity
 ```
 The merged model will be saved to `models/merged/smart-secrets-scanner/`.
+```bash
+ls -la outputs/merged/smart-secrets-scanner
+```
 
 **Verification:** After completion, verify the merged model by testing it:
 ```bash
-python scripts/inference.py --model outputs/merged/smart-secrets-scanner --input "Test prompt"
+python scripts/inference.py --model outputs/merged/smart-secrets-scanner/ --input "Test prompt"
 ```
 If it loads and generates output without errors, the merged model is valid and ready for GGUF conversion.
 
@@ -375,49 +383,70 @@ pip install sentencepiece protobuf
 
 ### 1.  Convert to GGUF Format
 
-Convert the merged model to the GGUF format required by Ollama.
+Convert the merged model to the GGUF format required by Ollama. (about 35 mins)
 
 ```bash
 python scripts/convert_to_gguf.py --quant Q4_K_M --force
 ```
 The final quantized `.gguf` file will be saved to `models/fine-tuned/gguf/smart-secrets-scanner.gguf`.
 
-next test the gguf model with the following
+```bash
+ls -la models/fine-tuned/gguf
+```
+
+next test the gguf model with the following 
 ```bash
 python scripts/inference.py --model models/fine-tuned/gguf/smart-secrets-scanner-Q4_K_M.gguf --input "Test prompt"
 ```
 
+**Move GGUF File to Linux Path (CRITICAL WSL FIX)**
+
+The `Modelfile` script outputs a path that points to the Windows file system (`/mnt/c/...`), which the Linux-based Ollama service rejects. To fix this, you must **move the GGUF file** to a Linux-native location (`~/ollama-models/`) that Ollama accepts.
+
+Move the New GGUF File (From Windows-mounted path to Linux-native path):
+```bash
+mv /mnt/c/Users/RICHFREM/source/repos/Smart-Secrets-Scanner/models/fine-tuned/gguf/smart-secrets-scanner-Q4_K_M.gguf ~/ollama-models/
+```
+
 ---
 
-### 2. Test gguf file locally with ollama
+## 2. Test GGUF File Locally with Ollama
 
-**2a. Generate Modelfile:**
+This section details the steps to import your newly generated, valid GGUF file into the Ollama service running inside WSL.
 
-Run the bulletproof Modelfile generator script:
+### 2a. Generate Modelfile
+
+Run the Modelfile generator script. This creates the local `Modelfile` which defines your model's template, parameters, and system prompt.
+
+> **Note:** We updated `create_modelfile.py` to hardcode the GGUF path to `/home/richfrem/ollama-models/smart-secrets-scanner-Q4_K_M.gguf`, bypassing the Windows file system issues.
 
 ```bash
 python scripts/create_modelfile.py
 ```
 
-This creates a production-ready Modelfile with auto-detected GGUF path, official Llama-3.1-8B template, full Smart-Secrets-Scanner system prompt, and optimized parameters.
-
-**2b. Import to Ollama:**
+Update modelfile in hugging face with upload script
 ```bash
-ollama create smart-secrets-scanner -f Modelfile
+
 ```
 
-**2c. Run locally in Ollama:**
+### 2b. Command: Import to Ollama (Updated)
+
+This is the last command to successfully import the model, using the custom configuration in the `Modelfile` we just generated.  ollama 13 needs to have only lowercase and no hyphens
+
 ```bash
-ollama run smart-secrets-scanner
+ollama create aisecretscanner -f Modelfile --override
+ollama list
+#create alias to ai-secret-scanner
+ollama cp aisecretscanner ai-secret-scanner
+ollama run ai-secret-scanner
 ```
----
 
-**2d. Test Both Interaction Modes:**
+**Note:** The `-f Modelfile` flag tells Ollama to use the local configuration file instead of a simple inline command. This ensures all your custom system prompts, templates, and parameters are applied.
 
-After running `ollama run smart-secrets-scanner`, you can test the model's dual-mode capability:
+#### TEST Mode 1 - Plain Language Conversational Mode (Default):
 
-**Mode 1 - Plain Language Conversational Mode (Default):**
 The model responds naturally and helpfully to direct questions and requests.
+
 ```bash
 >>> Analyze this code for secrets: API_KEY = 'sk-1234567890abcdef'
 >>> What types of secrets should I look for in code?
@@ -425,11 +454,14 @@ The model responds naturally and helpfully to direct questions and requests.
 >>> Who is the Smart-Secrets-Scanner?
 ```
 
-**Mode 2 - Structured Analysis Mode:**
+#### TEST Mode 2 - Structured Analysis Mode:
+
 When provided with code input, the model switches to generating security analysis for secret detection.
+
 ```bash
 >>> {"task_type": "secret_scan", "code_snippet": "const API_KEY = 'sk-1234567890abcdef'; const DB_PASS = 'admin123';", "analysis_type": "comprehensive"}
 ```
+
 *Expected Response:* The model outputs a structured analysis identifying potential security risks.
 
 This demonstrates Smart-Secrets-Scanner's ability to handle both human conversation and automated code analysis seamlessly.
@@ -440,30 +472,22 @@ This demonstrates Smart-Secrets-Scanner's ability to handle both human conversat
 
 **Note:** This section tests the local merged model (created in Phase 2) using Python inference scripts for comprehensive evaluation. For Ollama-based chat testing, see Section 2 above. After uploading to Hugging Face, compare performance with Section 5 (HF download testing).
 
-**3a. Quick Inference Test:**
-Use the `inference.py` script for a quick spot-check.
+#### 3a. Quick Inference Test: 
+Use the `inference.py` script for a quick spot-check. (3 mins)
 ```bash
 python scripts/inference.py --input "Analyze this code for secrets: API_KEY = 'sk-1234567890abcdef'"
 ```
 
-**3b. (Recommended) Full Evaluation:**
+#### 3b. (Recommended) Full Evaluation:**
 Run a full evaluation against a held-out test set to get objective performance metrics.
 
 ```bash
 pip install evaluate rouge-score
 ```
 
-
 ```bash
 python scripts/evaluate.py --load-in-4bit --test-data data/processed/smart-secrets-scanner-val.jsonl --max-examples 10
 ```
-
-**3c. Test GGUF Model Locally:**
-After creating the GGUF file, test it directly:
-```bash
-python scripts/inference.py --model models/fine-tuned/gguf/smart-secrets-scanner-Q4_K_M.gguf --input "Test prompt"
-```
-
 
 ---
 
@@ -504,83 +528,39 @@ python scripts/upload_to_huggingface.py --repo richfrem/smart-secrets-scanner-gg
 
 # Upload all (GGUF + configs + README)
 python scripts/upload_to_huggingface.py --repo richfrem/smart-secrets-scanner-gguf --gguf --system --template --params --readme
+
+# Upload lora only and read me
+python scripts/upload_to_huggingface.py --repo richfrem/smart-secrets-scanner-lora --lora --readme
 ```
 
 ---
 
 ### 5. download and test hugging face model
-
-**5a. Direct Run from Hugging Face (Recommended):**
-Ollama can run the model directly from Hugging Face without downloading it first. This is the most convenient method:
+This is a great idea. We should simplify the documentation by focusing on the `create_modelfile.py` script as the single source of truth for configuration, which aligns with your desired workflow.
 
 ```bash
+python scripts/create_modelfile.py
+cp Modelfile huggingface/
+```
+
+I have updated the section below. The key change is in **5b**, which now provides the exact steps for iterating on the configuration locally using the script and the `ollama create` command.
+
+-----
+
+### 5. Download and Test Hugging Face Model
+
+#### 5a. Direct Run from Hugging Face (Recommended):
+
+Ollama can run the model directly from Hugging Face without downloading it first. This is the most convenient method for initial setup:
+
+```bash
+# Optional: remove previous attempts
+ollama rm hf.co/richfrem/smart-secrets-scanner-gguf:Q4_K_M
+
+# Downloads the GGUF model and its associated config files (system, template, params.json)
 ollama run hf.co/richfrem/smart-secrets-scanner-gguf:Q4_K_M
 ```
 
-This command will automatically download and run the model from Hugging Face on-demand.
+This command will automatically download the model and its configuration files from Hugging Face on-demand.
 
-**5b. Download from Hugging Face:**
-If you prefer to download the model files for local verification:
-
-```bash
-python -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='richfrem/smart-secrets-scanner-gguf', local_dir='huggingface/downloaded_models')"
-```
-
-After downloading the model from Hugging Face, test it locally in Ollama to verify the upload/download process didn't corrupt the model and that inference works correctly. Compare performance with the local tests in Section 3 to ensure consistency.
-
-**Note:** The repository includes separate configuration files (system, template, params.json) that Ollama automatically detects and applies when running `ollama run hf.co/richfrem/smart-secrets-scanner-gguf:Q4_K_M`. For local testing, you can create a Modelfile from these files or use them directly.
-
-
-
-**5c. (Optional) Create Local Modelfile for Downloaded Model:**
-If you prefer to create a local Ollama model from the downloaded files instead of using the direct HF run, create a Modelfile that references the downloaded system, template, and params.json:
-
-```bash
-# Create a local Modelfile
-cat > Modelfile_HF << 'EOF'
-FROM ./huggingface/downloaded_models/smart-secrets-scanner-Q4_K_M.gguf
-
-SYSTEM "$(cat huggingface/downloaded_models/system)"
-
-TEMPLATE "$(cat huggingface/downloaded_models/template)"
-
-PARAMETER $(jq -r 'to_entries[] | "PARAMETER \(.key) \(.value)"' huggingface/downloaded_models/params.json | tr '\n' '\n')
-EOF
-```
-```
-FROM ./huggingface/downloaded_models/smart-secrets-scanner-Q4_K_M.gguf
-
-TEMPLATE """{{ if .System }}<|im_start|>system
-{{ .System }}<|im_end|>
-{{ end }}{{ if .Prompt }}<|im_start|>user
-{{ .Prompt }}<|im_end|>
-{{ end }}<|im_start|>assistant
-"""
-
-SYSTEM """You are a specialized code security analyzer trained to detect accidental hardcoded secrets (API keys, tokens, passwords, etc.) in source code.
-
-Your task is to scan code snippets and identify potential security risks such as:
-- API keys (AWS, Stripe, OpenAI, etc.)
-- Authentication tokens (GitHub, JWT, Bearer tokens)
-- Database credentials
-- Private keys and certificates
-- Passwords and secrets
-
-For each finding, respond with "ALERT: [type of secret] detected" and explain the risk.
-For safe code (environment variables, test data, placeholders), respond "No secrets detected" or "Safe pattern".
-
-Be precise and minimize false positives while catching real security issues."""
-
-PARAMETER stop "<|im_start|>"
-PARAMETER stop "<|im_end|>"
-```
-
-**5d. (Optional) Import Local Model to Ollama:**
-```bash
-ollama create smart-secrets-scanner-HF -f Modelfile_HF
-ollama run smart-secrets-scanner-HF
-```
-
-**5e. Test Inference:**
-Then, provide test prompts to verify the model responds correctly, such as: "Analyze this code for secrets: API_KEY = 'sk-1234567890abcdef'".
-
+-----

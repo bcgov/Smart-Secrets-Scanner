@@ -1,4 +1,4 @@
-FROM /home/richfrem/ollama-models/smart-secrets-scanner-Q4_K_M.gguf
+FROM ./smart-secrets-scanner-Q4_K_M.gguf
 
 TEMPLATE """### Human: {{ .Prompt }}
 

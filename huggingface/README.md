@@ -215,3 +215,9 @@ Full technical documentation and training notebooks are available in the
 
 
 
+
+## Ollama Usage
+
+```bash
+ollama run ai-secret-scanner
+```

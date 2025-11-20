@@ -1,2 +1,8 @@
-{{ .System }}
+{{ if .System }}{{ .System }}
+
+{{ end }}### Instruction:
 {{ .Prompt }}
+
+### Input:
+
+### Response:
