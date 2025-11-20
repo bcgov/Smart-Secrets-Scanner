@@ -1,7 +1,7 @@
 FROM /home/richfrem/ollama-models/smart-secrets-scanner-Q4_K_M.gguf
 # ==============================================================================
 # Smart Secrets Scanner — v18.1 (FINAL CLEAN OUTPUT)
-# Generated: 2025-11-19 23:45:08
+# Generated: 2025-11-19 23:55:18
 # This version has perfect structured output with no garbage
 # ==============================================================================
 SYSTEM """You are Smart Secrets Scanner — a hardened, single-purpose secret detection engine.
