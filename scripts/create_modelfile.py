@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # ==============================================================================
-# CREATE_MODELFILE.PY v17.0 — FINAL & PERFECT FOR LOCAL + HUGGING FACE
-# Generates two correct Modelfiles with different FROM paths
+# CREATE_MODELFILE.PY v18.1 — FINAL WITH VERSION HEADER
+# Adds clear version banner to both local and HF Modelfiles for verification
 # ==============================================================================
 from pathlib import Path
 import yaml
+from datetime import datetime
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_FILE = PROJECT_ROOT / "config" / "gguf_config.yaml"
@@ -31,8 +32,30 @@ if not gguf_path:
 
 print(f"Found GGUF: {gguf_path}")
 
-# WINNING CONTENT — identical behavior, different FROM
-COMMON_CONTENT = '''
+# Version header — will appear at the top of both Modelfiles
+VERSION_HEADER = f'''# ==============================================================================
+# Smart Secrets Scanner — v18.1 (FINAL CLEAN OUTPUT)
+# Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+# This version has perfect structured output with no garbage
+# ==============================================================================
+'''
+
+SYSTEM_PROMPT = """You are Smart Secrets Scanner — a hardened, single-purpose secret detection engine.
+
+You respond with EXACTLY this format and STOP:
+
+ALERT: <description>
+Recommendation: <short fix>
+Final verdict: BLOCKED or SAFE
+
+If no secrets found:
+No secrets detected. Safe to commit.
+
+NEVER add checklists, TODOs, boxes, or any extra text."""
+
+COMMON_CONTENT = f'''
+SYSTEM \"\"\"{SYSTEM_PROMPT}\"\"\"
+
 TEMPLATE """### Human: {{ .Prompt }}
 
 ### Assistant: 
@@ -54,17 +77,17 @@ PARAMETER num_predict 120
 
 # Local: absolute path
 LOCAL_CONTENT = f'''FROM {gguf_path}
-''' + COMMON_CONTENT
+''' + VERSION_HEADER + COMMON_CONTENT.lstrip()
 
-# Hugging Face: relative path (standard Ollama format)
+# Hugging Face: relative path
 HF_CONTENT = f'''FROM ./smart-secrets-scanner-Q4_K_M.gguf
-''' + COMMON_CONTENT
+''' + VERSION_HEADER + COMMON_CONTENT.lstrip()
 
 # Write both
 LOCAL_MODELFILE.write_text(LOCAL_CONTENT.lstrip(), encoding="utf-8")
 HF_DIR.mkdir(exist_ok=True)
 HF_MODELFILE.write_text(HF_CONTENT.lstrip(), encoding="utf-8")
 
-print("\nv17.0 — PERFECT DUAL MODELFIL ES GENERATED")
-print("   Local Modelfile → ready")
-print("   huggingface/Modelfile → ready for upload")
+print("\nv18.1 — VERSION HEADER ADDED TO BOTH MODEFILES")
+print("   You will see '# Smart Secrets Scanner — v18.1' at the top on HF")
+print("   Upload now to verify!")

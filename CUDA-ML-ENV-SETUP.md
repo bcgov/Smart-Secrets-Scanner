@@ -531,27 +531,30 @@ python scripts/upload_to_huggingface.py --repo richfrem/smart-secrets-scanner-gg
 
 # Upload lora only and read me
 python scripts/upload_to_huggingface.py --repo richfrem/smart-secrets-scanner-lora --lora --readme
+
+# upload model file
+python scripts/upload_to_huggingface.py --repo richfrem/smart-secrets-scanner-gguf --files huggingface/Modelfile
+
 ```
 
----
-
-### 5. download and test hugging face model
-This is a great idea. We should simplify the documentation by focusing on the `create_modelfile.py` script as the single source of truth for configuration, which aligns with your desired workflow.
-
-```bash
-python scripts/create_modelfile.py
-cp Modelfile huggingface/
-```
-
-I have updated the section below. The key change is in **5b**, which now provides the exact steps for iterating on the configuration locally using the script and the `ollama create` command.
-
------
+----
 
 ### 5. Download and Test Hugging Face Model
 
-#### 5a. Direct Run from Hugging Face (Recommended):
+#### 5a. Upload current modelfile to huggingface
 
-Ollama can run the model directly from Hugging Face without downloading it first. This is the most convenient method for initial setup:
+```bash
+# 1. Generate the correct full Modelfile
+python scripts/create_modelfile.py
+
+# 2. Upload ONLY the fixed Modelfile (your script will make FROM portable)
+python scripts/upload_to_huggingface.py \
+  --repo richfrem/smart-secrets-scanner-gguf \
+  --files huggingface/Modelfile
+```
+
+#### 5b. run model directly from hugging face
+This command will automatically download the model and its configuration files from Hugging Face on-demand.
 
 ```bash
 # Optional: remove previous attempts
@@ -560,7 +563,5 @@ ollama rm hf.co/richfrem/smart-secrets-scanner-gguf:Q4_K_M
 # Downloads the GGUF model and its associated config files (system, template, params.json)
 ollama run hf.co/richfrem/smart-secrets-scanner-gguf:Q4_K_M
 ```
-
-This command will automatically download the model and its configuration files from Hugging Face on-demand.
-
+run tests see also [TESTS_TO_RUN_WITH_MODEL.md](TESTS_TO_RUN_WITH_MODEL.md)
 -----

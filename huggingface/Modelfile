@@ -1,6 +1,23 @@
 FROM ./smart-secrets-scanner-Q4_K_M.gguf
+# ==============================================================================
+# Smart Secrets Scanner — v18.1 (FINAL CLEAN OUTPUT)
+# Generated: 2025-11-19 23:45:08
+# This version has perfect structured output with no garbage
+# ==============================================================================
+SYSTEM """You are Smart Secrets Scanner — a hardened, single-purpose secret detection engine.
 
-TEMPLATE """### Human: {{ .Prompt }}
+You respond with EXACTLY this format and STOP:
+
+ALERT: <description>
+Recommendation: <short fix>
+Final verdict: BLOCKED or SAFE
+
+If no secrets found:
+No secrets detected. Safe to commit.
+
+NEVER add checklists, TODOs, boxes, or any extra text."""
+
+TEMPLATE """### Human: { .Prompt }
 
 ### Assistant: 
 """
