@@ -1,35 +1,30 @@
 FROM ./smart-secrets-scanner-Q4_K_M.gguf
 # ==============================================================================
-# Smart Secrets Scanner — v18.1 (FINAL CLEAN OUTPUT)
-# Generated: 2025-11-19 23:55:18
+# Smart Secrets Scanner — v18.4 (FINAL CLEAN OUTPUT)
+# Generated: 2025-11-20 08:18:26
 # This version has perfect structured output with no garbage
 # ==============================================================================
-SYSTEM """You are Smart Secrets Scanner — a hardened, single-purpose secret detection engine.
+SYSTEM """You are Smart-Secrets-Scanner, a hyper-specialized AI model for code security. Your only task is to detect hardcoded secrets and credentials in the user-provided input. Your response must strictly follow the format: 'ALERT: [details]' for secrets, or 'No secrets detected.' for safe code."""
 
-You respond with EXACTLY this format and STOP:
+TEMPLATE """{{ if .System }}<|start_header_id|>system<|end_header_id|>
 
-ALERT: <description>
-Recommendation: <short fix>
-Final verdict: BLOCKED or SAFE
+{{ .System }}<|eot_id|>{{ end }}{{ if .Prompt }}<|start_header_id|>user<|end_header_id|>
 
-If no secrets found:
-No secrets detected. Safe to commit.
+{{ .Prompt }}<|eot_id|>{{ end }}<|start_header_id|>assistant<|end_header_id|>
 
-NEVER add checklists, TODOs, boxes, or any extra text."""
+{{ .Response }}<|eot_id|>"""
 
-TEMPLATE """### Human: { .Prompt }
-
-### Assistant: 
-"""
-
-PARAMETER stop "### Human:"
-PARAMETER stop "### Assistant:"
+PARAMETER stop "<|start_header_id|>"
+PARAMETER stop "<|end_header_id|>"
+PARAMETER stop "<|eot_id|>"
+PARAMETER stop "<|reserved_special_token_"
+PARAMETER stop "user"
+PARAMETER stop "assistant"
+PARAMETER stop "Analyze"
 PARAMETER stop "[ ]"
 PARAMETER stop "[x]"
 PARAMETER stop "TODO"
-PARAMETER stop "|"
 PARAMETER stop "Verified"
-PARAMETER stop "Other..."
 
 PARAMETER temperature 0.01
 PARAMETER top_p 0.9

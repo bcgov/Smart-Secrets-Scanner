@@ -548,9 +548,7 @@ python scripts/upload_to_huggingface.py --repo richfrem/smart-secrets-scanner-gg
 python scripts/create_modelfile.py
 
 # 2. Upload ONLY the fixed Modelfile (your script will make FROM portable)
-python scripts/upload_to_huggingface.py \
-  --repo richfrem/smart-secrets-scanner-gguf \
-  --files huggingface/Modelfile
+python scripts/upload_to_huggingface.py --repo richfrem/smart-secrets-scanner-gguf --files huggingface/Modelfile
 ```
 
 #### 5b. run model directly from hugging face
