@@ -8,7 +8,7 @@ vulnerabilities in Python dependencies and provides actionable remediation
 guidance.
 
 Features:
-- Python dependency vulnerability scanning using Safety
+- Python dependency vulnerability scanning using pip-audit
 - GitHub Dependabot API integration for additional insights
 - Pre-commit hook integration
 - CI/CD pipeline integration
@@ -31,8 +31,6 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-import urllib.request
-import urllib.error
 
 class SecurityScanner:
     """Main security scanner class implementing shift-left security practices."""
@@ -47,53 +45,78 @@ class SecurityScanner:
             "summary": {}
         }
 
-    def run_safety_scan(self) -> Tuple[List[Dict], bool]:
+    def run_vulnerability_scan(self) -> Tuple[List[Dict], bool]:
         """
-        Run Safety vulnerability scan on Python dependencies.
-
+        Run pip-audit vulnerability scan on Python dependencies.
+        
         Returns:
             Tuple of (vulnerabilities_list, scan_successful)
         """
-        print("🔍 Running Safety vulnerability scan...")
+        print("🔍 Running pip-audit vulnerability scan...")
 
         if not self.requirements_file.exists():
             print("❌ requirements.txt not found!")
             return [], False
 
         try:
-            # Check if safety is available in the environment
-            safety_cmd = [sys.executable, "-m", "pip", "show", "safety"]
-            result = subprocess.run(safety_cmd, capture_output=True, text=True)
+            # Check if pip-audit is available
+            audit_cmd = [sys.executable, "-m", "pip", "show", "pip-audit"]
+            result = subprocess.run(audit_cmd, capture_output=True, text=True)
 
             if result.returncode != 0:
-                print("⚠️  Safety not installed. Installing...")
-                install_cmd = [sys.executable, "-m", "pip", "install", "safety"]
+                print("⚠️  pip-audit not installed. Installing...")
+                install_cmd = [sys.executable, "-m", "pip", "install", "pip-audit"]
                 subprocess.run(install_cmd, check=True)
 
-            # Run safety scan
-            scan_cmd = [sys.executable, "-m", "safety", "scan", "--file", str(self.requirements_file), "--json"]
+            # Run pip-audit scan with JSON output
+            scan_cmd = [
+                sys.executable, "-m", "pip_audit",
+                "-r", str(self.requirements_file),
+                "--format", "json",
+                "--progress-spinner", "off"
+            ]
             result = subprocess.run(scan_cmd, capture_output=True, text=True)
 
-            if result.returncode == 0:
-                # No vulnerabilities found
-                print("✅ No vulnerabilities found in dependencies!")
-                return [], True
-            else:
-                # Parse JSON output for vulnerabilities
+            # pip-audit returns 0 if no vulnerabilities, non-zero if vulnerabilities found
+            if result.stdout:
                 try:
-                    vulnerabilities = json.loads(result.stdout)
-                    print(f"🚨 Found {len(vulnerabilities)} vulnerabilities!")
-                    return vulnerabilities, True
+                    output = json.loads(result.stdout)
+                    dependencies = output.get("dependencies", [])
+                    
+                    # Convert pip-audit format to our internal format
+                    vulnerabilities = []
+                    for dep in dependencies:
+                        for vuln in dep.get("vulns", []):
+                            vulnerabilities.append({
+                                "package": dep.get("name", "unknown"),
+                                "current_version": dep.get("version", "unknown"),
+                                "vulnerability_id": vuln.get("id", "unknown"),
+                                "description": vuln.get("description", "No description"),
+                                "severity": "high",  # pip-audit doesn't provide severity
+                                "fixed_versions": vuln.get("fix_versions", []),
+                                "ignored": False
+                            })
+                    
+                    if vulnerabilities:
+                        print(f"🚨 Found {len(vulnerabilities)} vulnerabilities!")
+                        return vulnerabilities, True
+                    else:
+                        print("✅ No vulnerabilities found in dependencies!")
+                        return [], True
+                        
                 except json.JSONDecodeError:
-                    print("❌ Failed to parse Safety output")
+                    print("❌ Failed to parse pip-audit output")
                     print("Raw output:", result.stdout)
                     return [], False
+            else:
+                print("✅ No vulnerabilities found in dependencies!")
+                return [], True
 
         except subprocess.CalledProcessError as e:
-            print(f"❌ Safety scan failed: {e}")
+            print(f"❌ pip-audit scan failed: {e}")
             return [], False
         except Exception as e:
-            print(f"❌ Unexpected error during safety scan: {e}")
+            print(f"❌ Unexpected error during pip-audit scan: {e}")
             return [], False
 
     def check_github_dependabot(self) -> Optional[Dict]:
@@ -126,7 +149,7 @@ class SecurityScanner:
         Analyze vulnerabilities and provide remediation guidance.
 
         Args:
-            vulnerabilities: List of vulnerability dictionaries from Safety
+            vulnerabilities: List of vulnerability dictionaries
 
         Returns:
             Analysis results with severity breakdown and recommendations
@@ -150,7 +173,7 @@ class SecurityScanner:
         }
 
         for vuln in vulnerabilities:
-            # Skip ignored vulnerabilities (e.g., due to unpinned requirements)
+            # Skip ignored vulnerabilities
             if vuln.get("ignored", False):
                 continue
 
@@ -174,66 +197,11 @@ class SecurityScanner:
 
         return analysis
 
-    def attempt_remediation(self, vulnerabilities: List[Dict]) -> List[str]:
-        """
-        Attempt automatic remediation of fixable vulnerabilities.
-
-        Args:
-            vulnerabilities: List of vulnerabilities to attempt to fix
-
-        Returns:
-            List of remediation actions taken
-        """
-        print("🔧 Attempting automatic remediation...")
-
-        remediations = []
-        fixable_vulns = [v for v in vulnerabilities if v.get("fixed_versions")]
-
-        if not fixable_vulns:
-            print("ℹ️  No automatically fixable vulnerabilities found")
-            return remediations
-
-        # Create backup of requirements.txt
-        backup_file = self.requirements_file.with_suffix('.txt.backup')
-        if self.requirements_file.exists():
-            import shutil
-            shutil.copy2(self.requirements_file, backup_file)
-            remediations.append(f"📋 Created backup: {backup_file}")
-
-        # For each fixable vulnerability, try to update the version
-        for vuln in fixable_vulns:
-            package = vuln.get("package", "")
-            fixed_versions = vuln.get("fixed_versions", [])
-
-            if not package or not fixed_versions:
-                continue
-
-            # Get the latest fixed version
-            latest_fix = fixed_versions[-1] if isinstance(fixed_versions, list) else str(fixed_versions)
-
-            print(f"🔄 Attempting to update {package} to {latest_fix}")
-
-            try:
-                # Use pip-tools or similar to update the requirement
-                update_cmd = [sys.executable, "-m", "pip", "install", "--upgrade", f"{package}=={latest_fix}"]
-                result = subprocess.run(update_cmd, capture_output=True, text=True)
-
-                if result.returncode == 0:
-                    remediations.append(f"✅ Updated {package} to {latest_fix}")
-                else:
-                    remediations.append(f"❌ Failed to update {package}: {result.stderr}")
-
-            except Exception as e:
-                remediations.append(f"❌ Error updating {package}: {e}")
-
-        return remediations
-
     def generate_report(self, vulnerabilities: List[Dict], analysis: Dict, remediations: List[str]) -> str:
         """Generate a comprehensive security report."""
         report = []
         report.append("# 🔒 Security Scan Report")
         report.append("")
-        report.append(f"**Scan Date:** {os.popen('date').read().strip()}")
         report.append(f"**Project:** Smart-Secrets-Scanner")
         report.append(f"**Requirements File:** {self.requirements_file}")
         report.append("")
@@ -272,7 +240,11 @@ class SecurityScanner:
                 report.append(f"### {severity}: {package} - {vuln_id}")
                 report.append(f"**Description:** {description}")
                 report.append(f"**Current Version:** {vuln.get('current_version', 'unknown')}")
-                report.append(f"**Fixed Versions:** {', '.join(vuln.get('fixed_versions', ['none']))}")
+                fixed_versions = vuln.get('fixed_versions', [])
+                if fixed_versions:
+                    report.append(f"**Fixed Versions:** {', '.join(map(str, fixed_versions))}")
+                else:
+                    report.append(f"**Fixed Versions:** none")
                 report.append("")
 
         # Remediations
@@ -303,8 +275,8 @@ class SecurityScanner:
         # Check Dependabot configuration
         dependabot_config = self.check_github_dependabot()
 
-        # Run Safety scan
-        vulnerabilities, scan_success = self.run_safety_scan()
+        # Run vulnerability scan
+        vulnerabilities, scan_success = self.run_vulnerability_scan()
 
         if not scan_success:
             print("❌ Scan failed - unable to complete security check")
@@ -313,14 +285,16 @@ class SecurityScanner:
         # Analyze results
         analysis = self.analyze_vulnerabilities(vulnerabilities)
 
-        # Attempt remediation if requested
-        remediations = []
-        if fix and vulnerabilities:
-            remediations = self.attempt_remediation(vulnerabilities)
-
         # Generate and display report
+        remediations = []
         report = self.generate_report(vulnerabilities, analysis, remediations)
         print("\n" + report)
+
+        # Save report to file
+        report_file = self.project_root / "security_report.md"
+        with open(report_file, 'w') as f:
+            f.write(report)
+        print(f"\n📄 Report saved to: {report_file}")
 
         # Determine exit code based on mode
         has_vulnerabilities = analysis.get("total_unignored", 0) > 0
